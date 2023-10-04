@@ -39,10 +39,11 @@ class Config:
         "localhost",
     )
 
+
 config = Config()
 BASE_URL = config.BASE_URL
 
-if(config.OAUTH_CLIENT_ID == "localhost"):
+if config.OAUTH_CLIENT_ID == "localhost":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
 
 auth_req = google.auth.transport.requests.Request()
