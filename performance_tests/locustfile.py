@@ -36,12 +36,15 @@ class Config:
     TEST_SCHEMA_FILE = "schema.json"
     OAUTH_CLIENT_ID = get_value_from_env(
         "OAUTH_CLIENT_ID",
-        "293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercontent.com",
+        "localhost",
     )
-
 
 config = Config()
 BASE_URL = config.BASE_URL
+
+if(config.OAUTH_CLIENT_ID == "localhost"):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
+
 auth_req = google.auth.transport.requests.Request()
 auth_token = google.oauth2.id_token.fetch_id_token(
     auth_req, audience=config.OAUTH_CLIENT_ID
@@ -69,7 +72,7 @@ def post_sds_v1(payload):
         obj: response object
     """
     return requests.post(
-        f"{BASE_URL}/v1/schema?survey_id=123",
+        f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
         headers=HEADERS,
         json=payload,
         timeout=60,

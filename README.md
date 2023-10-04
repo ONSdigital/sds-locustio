@@ -12,7 +12,41 @@ source .venv/bin/activate
 pip install -r performance_tests/requirements.txt
 ```
 
+### Locust performance testing with the SDS docker version running at http://127.0.0.1:3000/
+
+- Set the OAUTH_CLIENT_ID value as 'localhost'
+- Place the 'sandbox-key.json' in the 'performance_tests' directory and set the env variable 'GOOGLE_APPLICATION_CREDENTIALS'
+
+```bash
+OAUTH_CLIENT_ID=localhost
+```
+
+### Start the locust local web server
+
+Switch to the 'performance_tests' directory
+
+```bash
+locust -f locustfile.py
+```
+
+- Open the locust web UI at http://0.0.0.0:8089/
+- Enter some parameters for the number of concurrent users and ramp up rate
+- Click 'Start Swarming' to start the test
+
+### Locust performance testing with the SDS cloud version running in the GCP project 'ons-sds-sandbox-01'
+
+### Framework dockerized and run as a job
+
 ### Build the locust container and push to the GCP container registry
+
+- Switch to the 'sds-locustio' directory
+- Set the below env variables
+
+```bash
+PROJECT_ID=ons-sds-sandbox-01
+BASE_URL=https://34.149.110.167.nip.io
+OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercontent.com
+```
 
 ```bash
 gcloud builds submit --tag gcr.io/$PROJECT_ID/locust-tasks:latest performance_tests/
