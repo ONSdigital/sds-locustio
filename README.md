@@ -44,7 +44,7 @@ locust -f locustfile.py
 
 ```bash
 PROJECT_ID=ons-sds-sandbox-01
-BASE_URL=https://34.149.110.167.nip.io
+BASE_URL=https://34.160.14.110.nip.io
 OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercontent.com
 ```
 

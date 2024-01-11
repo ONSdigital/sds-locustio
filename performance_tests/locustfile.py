@@ -130,3 +130,11 @@ class PerformanceTests(HttpUser):
             f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
             headers=HEADERS,
         )
+
+    @task
+    def get_unit_data_from_sds(self):
+        """Performance test task for the `get_unit_data_from_sds` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/unit_data?dataset_id=8c7a591a-7e3d-4e85-b7c2-aa947915b2ba&identifier=43532",
+            headers=HEADERS,
+        )

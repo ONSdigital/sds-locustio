@@ -23,7 +23,7 @@ spec:
       containers:
         - env:
             - name: BASE_URL
-              value: https://34.149.110.167.nip.io
+              value: https://34.160.14.110.nip.io
             - name: PROJECT_ID
               value: ons-sds-sandbox-01
             - name: OAUTH_CLIENT_ID
