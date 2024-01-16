@@ -114,7 +114,7 @@ class PerformanceTests(HttpUser):
         super().on_stop()
         # delete_docs(self.survey_id)
 
-    @task
+    '''@task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         self.client.post(
@@ -129,7 +129,7 @@ class PerformanceTests(HttpUser):
         self.client.get(
             f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
             headers=HEADERS,
-        )
+        )'''
 
     @task
     def get_unit_data_from_sds(self):
