@@ -1,0 +1,56 @@
+{
+  "survey_id": "test_survey_id",
+  "period_id": "test_period_id",
+  "form_types": ["klk", "xyz", "tzr"],
+  "title": "Which side was better?",
+  "schema_version": "v1.0.0",
+  "data": [
+    {
+      "identifier": "43532",
+      "unit_data": "<encrypted data>"
+    },
+    {
+      "identifier": "65871",
+      "unit_data": {
+        "identifier": "65871",
+        "runame": "Boats and Floats Ltd",
+        "ruaddr1": "111 Upper Hill",
+        "ruaddr2": "Mordor",
+        "rupostcode": "HO10 1AA",
+        "payeref": "8888",
+        "busdesc": "Provision of equipment for the bad guys.",
+        "local_unit": [
+          {
+            "identifier": "2012763A",
+            "luname": "Arms Factory",
+            "luaddr1": "1 Bag End",
+            "luaddr2": "Underhill",
+            "luaddr3": "Hobbiton",
+            "lupostcode": "HO1 1AA",
+            "tradstyle": "Also Does Adventures Ltd",
+            "busdesc": "Creates old fashioned looking paper maps"
+          },
+          {
+            "identifier": "20127364B",
+            "luname": "Swords Subsidiary",
+            "luaddr1": "12 The Farmstead",
+            "luaddr2": "Maggotsville",
+            "luaddr3": "Hobbiton",
+            "lupostcode": "HO1 1AB",
+            "busdesc": "Quality pipe manufacturer",
+            "buslref": "pipe123"
+          },
+          {
+            "identifier": "20127365C",
+            "luname": "Armor N Things",
+            "luaddr1": "5 Barrow Lane",
+            "luaddr2": "Striderton",
+            "luaddr3": "Bree",
+            "lupostcode": "BR1 1AC",
+            "busdesc": "Magic ring foundry"
+          }
+        ]
+      }
+    }
+  ]
+}
