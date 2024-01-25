@@ -1,48 +1,15 @@
 import json
 import os
+import time
 
 import google.oauth2.id_token
 import requests
 from locust import HttpUser, task
 from locust_test import locust_test_id
-import firebase_admin 
-from firebase_admin import credentials, firestore
+from google.cloud import storage, exceptions
+from config import config
 
 
-def get_value_from_env(env_value, default_value="") -> str:
-    """
-    Method to determine if a desired enviroment variable has been set and return it.
-    If an enviroment variable or default value are not set an expection is raised.
-
-    Parameters:
-        env_value: value to check environment for
-        default_value: optional argument to allow defaulting of values
-
-    Returns:
-        str: the environment value corresponding to the input
-    """
-    value = os.environ.get(env_value)
-    if value:
-        return value
-    elif default_value != "":
-        return default_value
-    else:
-        raise Exception(
-            f"The environment variable {env_value} must be set to proceed",
-        )
-
-
-class Config:
-    BASE_URL = get_value_from_env("BASE_URL", "http://127.0.0.1:3000")
-    PROJECT_ID = get_value_from_env("PROJECT_ID", "ons-sds-sandbox-01")
-    TEST_SCHEMA_FILE = "schema.json"
-    OAUTH_CLIENT_ID = get_value_from_env(
-        "OAUTH_CLIENT_ID",
-        "localhost",
-    )
-
-
-config = Config()
 BASE_URL = config.BASE_URL
 
 if config.OAUTH_CLIENT_ID == "localhost":
@@ -56,7 +23,7 @@ HEADERS = {"Authorization": f"Bearer {auth_token}"}
 
 
 # To be done - delete the documents created in the 'schemas' collection during the performance testing
-def delete_docs(survey_id):
+def delete_docs(survey_id: str):
     """
     Deletes firestore documents
 
@@ -64,8 +31,8 @@ def delete_docs(survey_id):
         survey_id (str)
     """
 
-
-def post_sds_v1(payload):
+# Post schema to SDS
+def post_sds_v1(payload: str):
     """Creates schema for testing purposes
 
     Args:
@@ -80,6 +47,49 @@ def post_sds_v1(payload):
         json=payload,
         timeout=60,
     )
+
+# Get bucket from SDS
+def get_bucket(bucket_name: str):
+    """"""
+    storage_client = storage.Client()
+    try:
+        bucket = storage_client.bucket(
+            bucket_name,
+        )
+        return bucket
+    except exceptions.NotFound as e:
+        raise RuntimeError(f"Error getting bucket {bucket_name}.")
+
+def upload_file(file: str, bucket_name: str):
+    """"""
+    storage_bucket = get_bucket(bucket_name)
+    try:
+        blob = storage_bucket.blob(file)
+        blob.upload_from_filename(
+            file,
+            content_type="application/json",
+        )
+    except exceptions as e:
+        raise RuntimeError(f"Error uploading file {file}.")
+
+def get_dataset_id(client, base_url: str, headers: str, filename: str, attempts: int = 5, backoff: int = 0.5,):
+    """"""
+    while attempts != 0:
+        response = client.get(
+            f"{base_url}/v1/dataset_metadata?survey_id=test_survey_id&period_id=test_period_id",
+            headers=headers,
+        )
+
+        if response.status_code == 200:
+            for dataset_metadata in response.json():
+                    if dataset_metadata["filename"] == filename:
+                        return dataset_metadata["dataset_id"]
+                    
+        attempts -= 1
+        time.sleep(backoff)
+        backoff += backoff
+                    
+    raise RuntimeError(f"Error getting dataset id using filename: {filename}.")
 
 
 def load_json(filepath: str) -> dict:
@@ -107,41 +117,24 @@ class PerformanceTests(HttpUser):
         self.request_headers = HEADERS
 
     def on_start(self):
-        """Create a schema to find"""
         super().on_start()
+        # Publish 1 schema for endpoint testing
         post_sds_v1(self.post_sds_schema_payload)
+        # Publish 1 dataset for endpoint testing
+        upload_file(config.TEST_DATASET_FILE, f"{config.PROJECT_ID}-sds-europe-west2-dataset")
+        # Get dataset id
+        self.dataset_id = get_dataset_id(self.client, BASE_URL, HEADERS, config.TEST_DATASET_FILE)
 
     def on_stop(self):
-        """Delete any schemas we've created"""
         super().on_stop()
-        # delete_docs(self.survey_id)
+        # Delete created schema files from schema bucket
+        # Delete inserted schema data from FireStore
+        # Delete inserted dataset and sub collection (unit data) from FireStore
 
-    def upload_database(self, dataset_name, json_file_path):
-        try:
-            cred = credentials.Certificate(serviceAccountName)
-            firebase_admin.initialize_app(cred)
+    ### Performance tests ###
 
-            db = firestore.client()
-
-            with open(json_file_path) as f:
-                data = json.load(f)
-
-            
-            for doc in data:
-                db.collection().add(doc)
-            
-            print(f"Dataset '{dataset_name}' created and uploaded successfully")
-        
-        expection Exception as e:
-            print(f"Error creating dataset or uploading data: {e}")
-
-
-    def create_and_upload_data(self):
-        dataset_name = "ons-sds-sandbox-sds"
-        json_file_path = "data.json"
-
-
-    '''@task
+    # Test post schema endpoint
+    @task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         self.client.post(
@@ -150,69 +143,44 @@ class PerformanceTests(HttpUser):
             headers=HEADERS,
         )
 
+    # Test get schema metadata endpoint
     @task
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
             f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
             headers=HEADERS,
-        )'''
+        )
 
+    # Test get schema endpoint
     @task
-    def get_unit_data_from_sds(self):
-        """Performance test task for the `get_unit_data_from_sds` function"""
+    def http_get_sds_schema_v1(self):
+        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
-            f"{BASE_URL}/v1/unit_data?dataset_id=8c7a591a-7e3d-4e85-b7c2-aa947915b2ba&identifier=43532",
+            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
             headers=HEADERS,
         )
 
-#for reference only
-"""
-from google.cloud import storage, exceptions
-from google.oauth2 import service_account
- 
-def publish_dataset_to_sds_with_credential(file):
+    # Test get schema v2 endpoint
+        # Wait to be done - get schema v2 endpoint is not ready yet
 
-    """
-    """
-    Function to publish a dataset to sds dataset bucket
- 
-    Parameters:
-        file (str): the path and filename of the file being published
-    """
- """
-    # Project ID of SDS project, request it from SDS team
-    project_id = "ons-sds-test-integration-v1"
- 
-    # Dataset bucket name, request it from SDS team
-    bucket_name = f"{project_id}-europe-west2-dataset"
- 
-    # Obtain credential from an alternative service account key file
-    key_file = "ons-sds-test-integration-v1-tester-key.json"
-    credential = service_account.Credentials.from_service_account_file(key_file)
- 
-    # Get dataset bucket
-    storage_bucket = _get_dataset_bucket_with_credential(bucket_name, project_id, credential)
- 
-    # Upload file to bucket
-    blob = storage_bucket.blob(file)
-    blob.upload_from_filename(
-        file,
-        content_type="application/json",
-    )
- 
-def _get_dataset_bucket_with_credential(bucket_name, project_id, credential):
-    storage_client = storage.Client(project=project_id, credentials=credential)
-    try:
-        bucket = storage_client.bucket(
-            bucket_name,
+    # Test dataset metadata endpoint
+    @task
+    def http_get_sds_dataset_metadata_v1(self):
+        """"""
+        self.client.get(
+            f"{BASE_URL}/v1/dataset_metadata?survey_id=test_survey_id&period_id=test_period_id",
+            headers=HEADERS,
         )
-        return bucket
-    except exceptions.NotFound as e:
-        print(e)
-        #Raise exception
 
-if __name__ == "__main__":
-    print("Start script")
-    publish_dataset_to_sds_with_credential("test_dataset_demo.json")
-"""
+    # Test unit data endpoint
+    @task
+    def http_get_sds_unit_data_v1(self):
+        """Performance test task for the `get_unit_data_from_sds` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier=43532",
+            headers=HEADERS,
+        )
+
+    # Test publish dataset endpoint
+        # Wait to be done - publish dataset endpoint is not ready yet
