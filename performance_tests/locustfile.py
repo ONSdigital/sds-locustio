@@ -5,6 +5,8 @@ import google.oauth2.id_token
 import requests
 from locust import HttpUser, task
 from locust_test import locust_test_id
+import firebase_admin 
+from firebase_admin import credentials, firestore
 
 
 def get_value_from_env(env_value, default_value="") -> str:
@@ -114,6 +116,31 @@ class PerformanceTests(HttpUser):
         super().on_stop()
         # delete_docs(self.survey_id)
 
+    def upload_database(self, dataset_name, json_file_path):
+        try:
+            cred = credentials.Certificate(serviceAccountName)
+            firebase_admin.initialize_app(cred)
+
+            db = firestore.client()
+
+            with open(json_file_path) as f:
+                data = json.load(f)
+
+            
+            for doc in data:
+                db.collection().add(doc)
+            
+            print(f"Dataset '{dataset_name}' created and uploaded successfully")
+        
+        expection Exception as e:
+            print(f"Error creating dataset or uploading data: {e}")
+
+
+    def create_and_upload_data(self):
+        dataset_name = "ons-sds-sandbox-sds"
+        json_file_path = "data.json"
+
+
     '''@task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
@@ -138,3 +165,54 @@ class PerformanceTests(HttpUser):
             f"{BASE_URL}/v1/unit_data?dataset_id=8c7a591a-7e3d-4e85-b7c2-aa947915b2ba&identifier=43532",
             headers=HEADERS,
         )
+
+#for reference only
+"""
+from google.cloud import storage, exceptions
+from google.oauth2 import service_account
+ 
+def publish_dataset_to_sds_with_credential(file):
+
+    """
+    """
+    Function to publish a dataset to sds dataset bucket
+ 
+    Parameters:
+        file (str): the path and filename of the file being published
+    """
+ """
+    # Project ID of SDS project, request it from SDS team
+    project_id = "ons-sds-test-integration-v1"
+ 
+    # Dataset bucket name, request it from SDS team
+    bucket_name = f"{project_id}-europe-west2-dataset"
+ 
+    # Obtain credential from an alternative service account key file
+    key_file = "ons-sds-test-integration-v1-tester-key.json"
+    credential = service_account.Credentials.from_service_account_file(key_file)
+ 
+    # Get dataset bucket
+    storage_bucket = _get_dataset_bucket_with_credential(bucket_name, project_id, credential)
+ 
+    # Upload file to bucket
+    blob = storage_bucket.blob(file)
+    blob.upload_from_filename(
+        file,
+        content_type="application/json",
+    )
+ 
+def _get_dataset_bucket_with_credential(bucket_name, project_id, credential):
+    storage_client = storage.Client(project=project_id, credentials=credential)
+    try:
+        bucket = storage_client.bucket(
+            bucket_name,
+        )
+        return bucket
+    except exceptions.NotFound as e:
+        print(e)
+        #Raise exception
+
+if __name__ == "__main__":
+    print("Start script")
+    publish_dataset_to_sds_with_credential("test_dataset_demo.json")
+"""
