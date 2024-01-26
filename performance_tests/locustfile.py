@@ -15,11 +15,15 @@ BASE_URL = config.BASE_URL
 if config.OAUTH_CLIENT_ID == "localhost":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
 
-auth_req = google.auth.transport.requests.Request()
-auth_token = google.oauth2.id_token.fetch_id_token(
-    auth_req, audience=config.OAUTH_CLIENT_ID
-)
-HEADERS = {"Authorization": f"Bearer {auth_token}"}
+def set_header():
+    """Set header for SDS requests"""   
+    auth_req = google.auth.transport.requests.Request()
+    auth_token = google.oauth2.id_token.fetch_id_token(
+        auth_req, audience=config.OAUTH_CLIENT_ID
+    )
+    return {"Authorization": f"Bearer {auth_token}"}
+
+HEADERS = set_header()
 
 
 # To be done - delete the documents created in the 'schemas' collection during the performance testing
@@ -158,7 +162,7 @@ class PerformanceTests(HttpUser):
         self.client.post(
             f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
             json=self.post_sds_schema_payload,
-            headers=HEADERS,
+            headers=set_header(),
         )
 
     # Test get schema metadata endpoint
@@ -167,7 +171,7 @@ class PerformanceTests(HttpUser):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
             f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
-            headers=HEADERS,
+            headers=set_header(),
         )
 
     # Test get schema endpoint
@@ -176,7 +180,7 @@ class PerformanceTests(HttpUser):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
             f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-            headers=HEADERS,
+            headers=set_header(),
         )
 
     # Test get schema v2 endpoint
@@ -188,7 +192,7 @@ class PerformanceTests(HttpUser):
         """"""
         self.client.get(
             f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
-            headers=HEADERS,
+            headers=set_header(),
         )
 
     # Test unit data endpoint
@@ -197,7 +201,7 @@ class PerformanceTests(HttpUser):
         """Performance test task for the `get_unit_data_from_sds` function"""
         self.client.get(
             f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier=43532",
-            headers=HEADERS,
+            headers=set_header(),
         )
 
     # Test publish dataset endpoint
