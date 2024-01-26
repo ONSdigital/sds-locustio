@@ -48,6 +48,18 @@ def post_sds_v1(payload: str):
         timeout=60,
     )
 
+# Set locust test id for dataset.json
+def set_locust_test_id_in_dataset():
+    """"""
+    with open(config.TEST_DATASET_FILE) as f:
+        dataset = json.load(f)
+
+    dataset["survey_id"] = locust_test_id
+    dataset["period_id"] = locust_test_id
+
+    with open(config.TEST_DATASET_FILE, "w") as f:
+        json.dump(dataset, f)
+
 # Get bucket from SDS
 def get_bucket(bucket_name: str):
     """"""
@@ -60,7 +72,8 @@ def get_bucket(bucket_name: str):
     except exceptions.NotFound as e:
         raise RuntimeError(f"Error getting bucket {bucket_name}.")
 
-def upload_file(file: str, bucket_name: str):
+# Upload dataset file to SDS bucket
+def upload_file_to_bucket(file: str, bucket_name: str):
     """"""
     storage_bucket = get_bucket(bucket_name)
     try:
@@ -71,12 +84,13 @@ def upload_file(file: str, bucket_name: str):
         )
     except exceptions as e:
         raise RuntimeError(f"Error uploading file {file}.")
-
-def get_dataset_id(client, base_url: str, headers: str, filename: str, attempts: int = 5, backoff: int = 0.5,):
+    
+# Get dataset id for unit data endpoint testing
+def get_dataset_id(base_url: str, headers: str, filename: str, attempts: int = 5, backoff: int = 0.5,):
     """"""
     while attempts != 0:
-        response = client.get(
-            f"{base_url}/v1/dataset_metadata?survey_id=test_survey_id&period_id=test_period_id",
+        response = requests.get(
+            f"{base_url}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
             headers=headers,
         )
 
@@ -120,16 +134,20 @@ class PerformanceTests(HttpUser):
         super().on_start()
         # Publish 1 schema for endpoint testing
         post_sds_v1(self.post_sds_schema_payload)
+        # Set locust test id for dataset.json
+        set_locust_test_id_in_dataset()
         # Publish 1 dataset for endpoint testing
-        upload_file(config.TEST_DATASET_FILE, f"{config.PROJECT_ID}-sds-europe-west2-dataset")
+        upload_file_to_bucket(config.TEST_DATASET_FILE, f"{config.PROJECT_ID}-sds-europe-west2-dataset")
         # Get dataset id
-        self.dataset_id = get_dataset_id(self.client, BASE_URL, HEADERS, config.TEST_DATASET_FILE)
+        self.dataset_id = get_dataset_id(BASE_URL, HEADERS, config.TEST_DATASET_FILE)
 
     def on_stop(self):
         super().on_stop()
-        # Delete created schema files from schema bucket
-        # Delete inserted schema data from FireStore
-        # Delete inserted dataset and sub collection (unit data) from FireStore
+        # Read schema metadata from FireStore where survey_id = locust_test_id
+        # Retrieve the GUID from schema metadata
+        # Delete created schema files from schema bucket where filename = GUID.json
+        # Delete inserted schema data from FireStore where survey_id = locust_test_id
+        # Delete inserted dataset and sub collection (unit data) from FireStore where survey_id = locust_test_id
 
     ### Performance tests ###
 
@@ -169,7 +187,7 @@ class PerformanceTests(HttpUser):
     def http_get_sds_dataset_metadata_v1(self):
         """"""
         self.client.get(
-            f"{BASE_URL}/v1/dataset_metadata?survey_id=test_survey_id&period_id=test_period_id",
+            f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
             headers=HEADERS,
         )
 

@@ -1,6 +1,6 @@
 {
-  "survey_id": "test_survey_id",
-  "period_id": "test_period_id",
+  "survey_id": "#placeholder",
+  "period_id": "#placeholder",
   "form_types": ["klk", "xyz", "tzr"],
   "title": "Which side was better?",
   "schema_version": "v1.0.0",
