@@ -9,5 +9,6 @@ class Config:
         "OAUTH_CLIENT_ID",
         "localhost",
     )
+    DATABASE = "sds"
 
 config = Config()

@@ -3,11 +3,16 @@ import os
 import time
 
 import google.oauth2.id_token
+from google.cloud import firestore
 import requests
 from locust import HttpUser, task
 from locust_test import locust_test_id
 from google.cloud import storage, exceptions
 from config import config
+from firestore_helper import (
+    perform_delete_transaction
+)
+from firebase_loader import firebase_loader
 
 
 BASE_URL = config.BASE_URL
@@ -26,14 +31,19 @@ def set_header():
 HEADERS = set_header()
 
 
-# To be done - delete the documents created in the 'schemas' collection during the performance testing
-def delete_docs(survey_id: str):
+# Delete the documents created in the 'schemas' collection during the performance testing
+def delete_docs(survey_id: str, bucket_name: str):
     """
     Deletes firestore documents
 
     Args:
         survey_id (str)
     """
+    storage_bucket = get_bucket(bucket_name)
+    blobs = storage_bucket.list_blobs(prefix=survey_id)
+
+    for blob in blobs:
+        blob.delete()
 
 # Post schema to SDS
 def post_sds_v1(payload: str):
@@ -122,6 +132,28 @@ def load_json(filepath: str) -> dict:
     """
     with open(filepath) as f:
         return json.load(f)
+    
+def get_firestore_collection(client, collection_name: str) -> firestore.CollectionReference:
+    """
+    Method to get a firestore collection.
+
+    Parameters:
+        collection_name: string specifying the name of the collection to be retrieved.
+
+    Returns:
+        firestore.CollectionReference: the collection reference.
+    """
+    return client.collection(collection_name)
+
+def delete_firestore_data(survey_id: str):
+    """
+    """
+    client = firebase_loader.get_client()
+    transaction = client.transaction()
+    schemas_collection = get_firestore_collection(client, "schemas")
+    perform_delete_transaction(transaction, schemas_collection, survey_id)
+    datasets_collection = get_firestore_collection(client, "datasets", survey_id)
+    perform_delete_transaction(transaction,datasets_collection, survey_id)
 
 
 class PerformanceTests(HttpUser):
@@ -147,11 +179,11 @@ class PerformanceTests(HttpUser):
 
     def on_stop(self):
         super().on_stop()
-        # Read schema metadata from FireStore where survey_id = locust_test_id
-        # Retrieve the GUID from schema metadata
-        # Delete created schema files from schema bucket where filename = GUID.json
+        # Delete folder name = locust_test_id from SDS bucket
+        delete_docs(locust_test_id, f"{config.PROJECT_ID}-sds-europe-west2-schema")
         # Delete inserted schema data from FireStore where survey_id = locust_test_id
         # Delete inserted dataset and sub collection (unit data) from FireStore where survey_id = locust_test_id
+        delete_firestore_data(locust_test_id)
 
     ### Performance tests ###
 
