@@ -1,18 +1,12 @@
-import json
 import os
-import time
 
 import google.oauth2.id_token
-from google.cloud import firestore
-import requests
 from locust import HttpUser, task
 from locust_test import locust_test_id
-from google.cloud import storage, exceptions
 from config import config
-from firestore_helper import (
-    perform_delete_transaction
-)
-from firebase_loader import firebase_loader
+import subprocess
+from locust_helper import LocustHelper
+from json_generator import JsonGenerator
 
 
 BASE_URL = config.BASE_URL
@@ -29,131 +23,12 @@ def set_header():
     return {"Authorization": f"Bearer {auth_token}"}
 
 HEADERS = set_header()
+DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
+TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
 
 
-# Delete the documents created in the 'schemas' collection during the performance testing
-def delete_docs(survey_id: str, bucket_name: str):
-    """
-    Deletes firestore documents
-
-    Args:
-        survey_id (str)
-    """
-    storage_bucket = get_bucket(bucket_name)
-    blobs = storage_bucket.list_blobs(prefix=survey_id)
-
-    for blob in blobs:
-        blob.delete()
-
-# Post schema to SDS
-def post_sds_v1(payload: str):
-    """Creates schema for testing purposes
-
-    Args:
-        payload (json): json to be sent to API
-
-    Returns:
-        obj: response object
-    """
-    return requests.post(
-        f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-        headers=HEADERS,
-        json=payload,
-        timeout=60,
-    )
-
-# Set locust test id for dataset.json
-def set_locust_test_id_in_dataset():
-    """"""
-    with open(config.TEST_DATASET_FILE) as f:
-        dataset = json.load(f)
-
-    dataset["survey_id"] = locust_test_id
-    dataset["period_id"] = locust_test_id
-
-    with open(config.TEST_DATASET_FILE, "w") as f:
-        json.dump(dataset, f)
-
-# Get bucket from SDS
-def get_bucket(bucket_name: str):
-    """"""
-    storage_client = storage.Client()
-    try:
-        bucket = storage_client.bucket(
-            bucket_name,
-        )
-        return bucket
-    except exceptions.NotFound as e:
-        raise RuntimeError(f"Error getting bucket {bucket_name}.")
-
-# Upload dataset file to SDS bucket
-def upload_file_to_bucket(file: str, bucket_name: str):
-    """"""
-    storage_bucket = get_bucket(bucket_name)
-    try:
-        blob = storage_bucket.blob(file)
-        blob.upload_from_filename(
-            file,
-            content_type="application/json",
-        )
-    except exceptions as e:
-        raise RuntimeError(f"Error uploading file {file}.")
-    
-# Get dataset id for unit data endpoint testing
-def get_dataset_id(base_url: str, headers: str, filename: str, attempts: int = 5, backoff: int = 0.5,):
-    """"""
-    while attempts != 0:
-        response = requests.get(
-            f"{base_url}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
-            headers=headers,
-        )
-
-        if response.status_code == 200:
-            for dataset_metadata in response.json():
-                    if dataset_metadata["filename"] == filename:
-                        return dataset_metadata["dataset_id"]
-                    
-        attempts -= 1
-        time.sleep(backoff)
-        backoff += backoff
-                    
-    raise RuntimeError(f"Error getting dataset id using filename: {filename}.")
-
-
-def load_json(filepath: str) -> dict:
-    """
-    Method to load json from a file.
-
-    Parameters:
-        filepath: string specifying the location of the file to be loaded.
-
-    Returns:
-        dict: the json object from the specified file.
-    """
-    with open(filepath) as f:
-        return json.load(f)
-    
-def get_firestore_collection(client, collection_name: str) -> firestore.CollectionReference:
-    """
-    Method to get a firestore collection.
-
-    Parameters:
-        collection_name: string specifying the name of the collection to be retrieved.
-
-    Returns:
-        firestore.CollectionReference: the collection reference.
-    """
-    return client.collection(collection_name)
-
-def delete_firestore_data(survey_id: str):
-    """
-    """
-    client = firebase_loader.get_client()
-    transaction = client.transaction()
-    schemas_collection = get_firestore_collection(client, "schemas")
-    perform_delete_transaction(transaction, schemas_collection, survey_id)
-    datasets_collection = get_firestore_collection(client, "datasets", survey_id)
-    perform_delete_transaction(transaction,datasets_collection, survey_id)
+locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
+json_generator = JsonGenerator(locust_test_id, config.TEST_DATASET_FILE, config.DATASET_ENTRIES, config.FIXED_IDENTIFIERS)
 
 
 class PerformanceTests(HttpUser):
@@ -163,76 +38,78 @@ class PerformanceTests(HttpUser):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
 
-        self.post_sds_schema_payload = load_json(config.TEST_SCHEMA_FILE)
-        self.request_headers = HEADERS
+        self.post_sds_schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
 
     def on_start(self):
         super().on_start()
         # Publish 1 schema for endpoint testing
-        post_sds_v1(self.post_sds_schema_payload)
-        # Set locust test id for dataset.json
-        set_locust_test_id_in_dataset()
+        locust_helper.spin_up_schema(self.post_sds_schema_payload)
+
+        # Generate dataset file
+        json_generator.generate_dataset_file()
         # Publish 1 dataset for endpoint testing
-        upload_file_to_bucket(config.TEST_DATASET_FILE, f"{config.PROJECT_ID}-sds-europe-west2-dataset")
-        # Get dataset id
-        self.dataset_id = get_dataset_id(BASE_URL, HEADERS, config.TEST_DATASET_FILE)
+        locust_helper.spin_up_dataset(config.TEST_DATASET_FILE)
+        
+        # Get dataset id for unit_data endpoint retrieval
+        self.dataset_id = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
 
     def on_stop(self):
         super().on_stop()
-        # Delete folder name = locust_test_id from SDS bucket
-        delete_docs(locust_test_id, f"{config.PROJECT_ID}-sds-europe-west2-schema")
-        # Delete inserted schema data from FireStore where survey_id = locust_test_id
-        # Delete inserted dataset and sub collection (unit data) from FireStore where survey_id = locust_test_id
-        delete_firestore_data(locust_test_id)
+        # Delete locust test schema files from SDS bucket
+        locust_helper.delete_docs(locust_test_id, f"{config.PROJECT_ID}-sds-europe-west2-schema")
+        # Delete locust test schema and dataset data from FireStore
+        # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+        if not config.OAUTH_CLIENT_ID == "localhost":
+            subprocess.run(["python", "delete_firestore_locust_test_data.py", "--project_id", config.PROJECT_ID, "--database_name", DATABASE_NAME, "--survey_id", locust_test_id])
 
     ### Performance tests ###
 
     # Test post schema endpoint
-    # @task
-    # def http_post_sds_v1(self):
-    #     """Performance test task for the `http_post_sds_v1` function"""
-    #     self.client.post(
-    #         f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-    #         json=self.post_sds_schema_payload,
-    #         headers=set_header(),
-    #     )
+    @task
+    def http_post_sds_v1(self):
+        """Performance test task for the `http_post_sds_v1` function"""
+        self.client.post(
+            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+            json=self.post_sds_schema_payload,
+            headers=set_header(),
+        )
 
-    # # Test get schema metadata endpoint
-    # @task
-    # def http_get_sds_schema_metadata_v1(self):
-    #     """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-    #     self.client.get(
-    #         f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
-    #         headers=set_header(),
-    #     )
+    # Test get schema metadata endpoint
+    @task
+    def http_get_sds_schema_metadata_v1(self):
+        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
+            headers=set_header(),
+        )
 
-    # # Test get schema endpoint
-    # @task
-    # def http_get_sds_schema_v1(self):
-    #     """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-    #     self.client.get(
-    #         f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-    #         headers=set_header(),
-    #     )
+    # Test get schema endpoint
+    @task
+    def http_get_sds_schema_v1(self):
+        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+            headers=set_header(),
+        )
 
-    # # Test get schema v2 endpoint
-    #     # Wait to be done - get schema v2 endpoint is not ready yet
+    # Test get schema v2 endpoint
+        # Wait to be done - get schema v2 endpoint is not ready yet
 
-    # # Test dataset metadata endpoint
-    # @task
-    # def http_get_sds_dataset_metadata_v1(self):
-    #     """"""
-    #     self.client.get(
-    #         f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
-    #         headers=set_header(),
-    #     )
+    # Test dataset metadata endpoint
+    @task
+    def http_get_sds_dataset_metadata_v1(self):
+        """"""
+        self.client.get(
+            f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
+            headers=set_header(),
+        )
 
     # Test unit data endpoint
     @task
     def http_get_sds_unit_data_v1(self):
         """Performance test task for the `get_unit_data_from_sds` function"""
         self.client.get(
-            f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier=43532",
+            f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
             headers=set_header(),
         )
 
