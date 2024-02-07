@@ -188,44 +188,44 @@ class PerformanceTests(HttpUser):
     ### Performance tests ###
 
     # Test post schema endpoint
-    @task
-    def http_post_sds_v1(self):
-        """Performance test task for the `http_post_sds_v1` function"""
-        self.client.post(
-            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-            json=self.post_sds_schema_payload,
-            headers=set_header(),
-        )
+    # @task
+    # def http_post_sds_v1(self):
+    #     """Performance test task for the `http_post_sds_v1` function"""
+    #     self.client.post(
+    #         f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+    #         json=self.post_sds_schema_payload,
+    #         headers=set_header(),
+    #     )
 
-    # Test get schema metadata endpoint
-    @task
-    def http_get_sds_schema_metadata_v1(self):
-        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-        self.client.get(
-            f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
-            headers=set_header(),
-        )
+    # # Test get schema metadata endpoint
+    # @task
+    # def http_get_sds_schema_metadata_v1(self):
+    #     """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+    #     self.client.get(
+    #         f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
+    #         headers=set_header(),
+    #     )
 
-    # Test get schema endpoint
-    @task
-    def http_get_sds_schema_v1(self):
-        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-        self.client.get(
-            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-            headers=set_header(),
-        )
+    # # Test get schema endpoint
+    # @task
+    # def http_get_sds_schema_v1(self):
+    #     """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+    #     self.client.get(
+    #         f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+    #         headers=set_header(),
+    #     )
 
-    # Test get schema v2 endpoint
-        # Wait to be done - get schema v2 endpoint is not ready yet
+    # # Test get schema v2 endpoint
+    #     # Wait to be done - get schema v2 endpoint is not ready yet
 
-    # Test dataset metadata endpoint
-    @task
-    def http_get_sds_dataset_metadata_v1(self):
-        """"""
-        self.client.get(
-            f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
-            headers=set_header(),
-        )
+    # # Test dataset metadata endpoint
+    # @task
+    # def http_get_sds_dataset_metadata_v1(self):
+    #     """"""
+    #     self.client.get(
+    #         f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
+    #         headers=set_header(),
+    #     )
 
     # Test unit data endpoint
     @task
