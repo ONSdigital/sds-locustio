@@ -2,6 +2,7 @@ import json
 import logging
 import time
 import os
+from pathlib import Path
 
 import requests
 from config import config
@@ -41,7 +42,8 @@ class LocustHelper:
             file (str): the name of the file
         """
         try:
-            os.remove(file)
+            if Path(file).is_file():
+                os.remove(file)
         except Exception as e:
             logging.error(f"Error deleting file: {e}")
             raise RuntimeError(f"Error deleting file: {e}")

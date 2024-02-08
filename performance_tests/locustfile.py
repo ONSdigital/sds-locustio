@@ -4,7 +4,7 @@ import subprocess
 import google.oauth2.id_token
 from config import config
 from json_generator import JsonGenerator
-from locust import HttpUser, task
+from locust import HttpUser, task, events
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
@@ -28,7 +28,6 @@ DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
 TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
 SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 
-
 locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
 json_generator = JsonGenerator(
     locust_test_id,
@@ -36,6 +35,52 @@ json_generator = JsonGenerator(
     config.DATASET_ENTRIES,
     config.FIXED_IDENTIFIERS,
 )
+
+SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+
+@events.test_start.add_listener
+def on_test_start(**kwargs):
+    """
+    Function to run before the test starts
+    """
+    # Generate dataset file
+    json_generator.generate_dataset_file()
+
+    # Publish 1 schema for endpoint testing
+    locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
+
+    # Publish 1 dataset for endpoint testing
+    locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+
+
+@events.test_stop.add_listener
+def on_test_stop(**kwargs):
+    """
+    Function to run after the test stops
+    """
+    # Delete locust test schema files from SDS bucket
+    locust_helper.delete_docs(
+        locust_test_id, SCHEMA_BUCKET
+    )
+
+    # Delete generated dataset file
+    locust_helper.delete_local_file(config.TEST_DATASET_FILE)
+
+    # Delete locust test schema and dataset data from FireStore
+    # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+    if config.OAUTH_CLIENT_ID != "localhost":
+        subprocess.run(
+            [
+                "python",
+                "delete_firestore_locust_test_data.py",
+                "--project_id",
+                config.PROJECT_ID,
+                "--database_name",
+                DATABASE_NAME,
+                "--survey_id",
+                locust_test_id,
+            ]
+        )
 
 
 class PerformanceTests(HttpUser):
@@ -46,43 +91,14 @@ class PerformanceTests(HttpUser):
         super().__init__(*args, **kwargs)
 
         self.post_sds_schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+        self.dataset_id = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
 
     def on_start(self):
         super().on_start()
-        # Publish 1 schema for endpoint testing
-        locust_helper.create_schema_record_before_test(self.post_sds_schema_payload)
-
-        # Generate dataset file
-        json_generator.generate_dataset_file()
-        # Publish 1 dataset for endpoint testing
-        locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
-
-        # Get dataset id for unit_data endpoint retrieval
-        self.dataset_id = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
 
     def on_stop(self):
         super().on_stop()
-        # Delete locust test schema files from SDS bucket
-        locust_helper.delete_docs(
-            locust_test_id, SCHEMA_BUCKET
-        )
-        # Delete generated dataset file
-        locust_helper.delete_local_file(config.TEST_DATASET_FILE)
-        # Delete locust test schema and dataset data from FireStore
-        # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
-        if config.OAUTH_CLIENT_ID != "localhost":
-            subprocess.run(
-                [
-                    "python",
-                    "delete_firestore_locust_test_data.py",
-                    "--project_id",
-                    config.PROJECT_ID,
-                    "--database_name",
-                    DATABASE_NAME,
-                    "--survey_id",
-                    locust_test_id,
-                ]
-            )
+    
 
     ### Performance tests ###
 

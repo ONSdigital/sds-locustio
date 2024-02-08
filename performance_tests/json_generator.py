@@ -1,5 +1,6 @@
 import json
 import random
+from pathlib import Path
 
 
 class JsonGenerator:
@@ -7,12 +8,12 @@ class JsonGenerator:
         self,
         survey_id: str,
         file_name: str,
-        dataset_entries: str,
+        dataset_entries: int,
         fixed_identifiers: list[str],
     ):
         self.survey_id = survey_id
         self.file_name = file_name
-        self.dataset_entries = dataset_entries
+        self.dataset_entries = int(dataset_entries)
         self.fixed_identifiers = fixed_identifiers
 
     def generate_dataset_file(self) -> None:
@@ -20,18 +21,19 @@ class JsonGenerator:
         Generate the dataset file.
         """
         try:
-            json_data = self._generate_json_data(
-                self.dataset_entries, self.survey_id, self.fixed_identifiers
-            )
+            if not Path(self.file_name).is_file():
+                json_data = self._generate_json_data(
+                    self.dataset_entries, self.survey_id, self.fixed_identifiers
+                )
 
-            # Specify the output file name
-            output_file_name = self.file_name
+                # Specify the output file name
+                output_file_name = self.file_name
 
-            # Write the JSON data to a file
-            with open(output_file_name, "w") as json_file:
-                json.dump(json_data, json_file, indent=2)
+                # Write the JSON data to a file
+                with open(output_file_name, "w") as json_file:
+                    json.dump(json_data, json_file, indent=2)
 
-            print(f"Data successfully written to {output_file_name}")
+                print(f"Data successfully written to {output_file_name}")
         except Exception as e:
             print(f"Error generating dataset file: {e}")
 
