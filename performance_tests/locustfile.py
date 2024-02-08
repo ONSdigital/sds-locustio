@@ -1,34 +1,41 @@
 import os
+import subprocess
 
 import google.oauth2.id_token
-from locust import HttpUser, task
-from locust_test import locust_test_id
 from config import config
-import subprocess
-from locust_helper import LocustHelper
 from json_generator import JsonGenerator
-
+from locust import HttpUser, task
+from locust_helper import LocustHelper
+from locust_test import locust_test_id
 
 BASE_URL = config.BASE_URL
 
 if config.OAUTH_CLIENT_ID == "localhost":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
 
+
 def set_header():
-    """Set header for SDS requests"""   
+    """Set header for SDS requests"""
     auth_req = google.auth.transport.requests.Request()
     auth_token = google.oauth2.id_token.fetch_id_token(
         auth_req, audience=config.OAUTH_CLIENT_ID
     )
     return {"Authorization": f"Bearer {auth_token}"}
 
+
 HEADERS = set_header()
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
 TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
+SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 
 
 locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
-json_generator = JsonGenerator(locust_test_id, config.TEST_DATASET_FILE, config.DATASET_ENTRIES, config.FIXED_IDENTIFIERS)
+json_generator = JsonGenerator(
+    locust_test_id,
+    config.TEST_DATASET_FILE,
+    config.DATASET_ENTRIES,
+    config.FIXED_IDENTIFIERS,
+)
 
 
 class PerformanceTests(HttpUser):
@@ -43,24 +50,37 @@ class PerformanceTests(HttpUser):
     def on_start(self):
         super().on_start()
         # Publish 1 schema for endpoint testing
-        locust_helper.spin_up_schema(self.post_sds_schema_payload)
+        locust_helper.create_schema_record_before_test(self.post_sds_schema_payload)
 
         # Generate dataset file
         json_generator.generate_dataset_file()
         # Publish 1 dataset for endpoint testing
-        locust_helper.spin_up_dataset(config.TEST_DATASET_FILE)
-        
+        locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+
         # Get dataset id for unit_data endpoint retrieval
         self.dataset_id = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
 
     def on_stop(self):
         super().on_stop()
         # Delete locust test schema files from SDS bucket
-        locust_helper.delete_docs(locust_test_id, f"{config.PROJECT_ID}-sds-europe-west2-schema")
+        locust_helper.delete_docs(
+            locust_test_id, SCHEMA_BUCKET
+        )
         # Delete locust test schema and dataset data from FireStore
         # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
-        if not config.OAUTH_CLIENT_ID == "localhost":
-            subprocess.run(["python", "delete_firestore_locust_test_data.py", "--project_id", config.PROJECT_ID, "--database_name", DATABASE_NAME, "--survey_id", locust_test_id])
+        if config.OAUTH_CLIENT_ID != "localhost":
+            subprocess.run(
+                [
+                    "python",
+                    "delete_firestore_locust_test_data.py",
+                    "--project_id",
+                    config.PROJECT_ID,
+                    "--database_name",
+                    DATABASE_NAME,
+                    "--survey_id",
+                    locust_test_id,
+                ]
+            )
 
     ### Performance tests ###
 
@@ -93,7 +113,7 @@ class PerformanceTests(HttpUser):
         )
 
     # Test get schema v2 endpoint
-        # Wait to be done - get schema v2 endpoint is not ready yet
+    # Wait to be done - get schema v2 endpoint is not ready yet
 
     # Test dataset metadata endpoint
     @task
@@ -114,4 +134,4 @@ class PerformanceTests(HttpUser):
         )
 
     # Test publish dataset endpoint
-        # Wait to be done - publish dataset endpoint is not ready yet
+    # Wait to be done - publish dataset endpoint is not ready yet
