@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import os
 
 import requests
 from config import config
@@ -30,6 +31,20 @@ class LocustHelper:
 
         for blob in blobs:
             blob.delete()
+
+    # Delete a local file
+    def delete_local_file(self, file: str) -> None:
+        """
+        Deletes a local file
+
+        Args:
+            file (str): the name of the file
+        """
+        try:
+            os.remove(file)
+        except Exception as e:
+            logging.error(f"Error deleting file: {e}")
+            raise RuntimeError(f"Error deleting file: {e}")
 
     # Create a schema record before testing
     def create_schema_record_before_test(self, payload: str) -> None:

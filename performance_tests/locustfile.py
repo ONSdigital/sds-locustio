@@ -66,6 +66,8 @@ class PerformanceTests(HttpUser):
         locust_helper.delete_docs(
             locust_test_id, SCHEMA_BUCKET
         )
+        # Delete generated dataset file
+        locust_helper.delete_local_file(config.TEST_DATASET_FILE)
         # Delete locust test schema and dataset data from FireStore
         # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
         if config.OAUTH_CLIENT_ID != "localhost":
