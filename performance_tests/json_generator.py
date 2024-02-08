@@ -57,9 +57,10 @@ class JsonGenerator:
         }
 
         unique_ids = set()
+        working_fixed_identifiers = fixed_identifiers.copy()
         for _ in range(entries_count):
-            fixed_identifiers, identifier = self._generate_unique_identifier(
-                unique_ids, fixed_identifiers
+            working_fixed_identifiers, identifier = self._generate_unique_identifier(
+                unique_ids, working_fixed_identifiers
             )
             unique_ids.add(identifier)
             unit_data = self._generate_unit_data()
@@ -68,7 +69,7 @@ class JsonGenerator:
         return data
 
     def _generate_unique_identifier(
-        self, existing_ids: set[str], fixed_identifiers: list[str]
+        self, existing_ids: set[str], working_fixed_identifiers: list[str]
     ) -> tuple[list[str], str]:
         """
         Generate a unique identifier for the dataset file.
@@ -82,12 +83,12 @@ class JsonGenerator:
         """
         while True:
             identifier = (
-                fixed_identifiers.pop()
-                if fixed_identifiers
+                working_fixed_identifiers.pop()
+                if working_fixed_identifiers
                 else str(random.randint(10000, 99999))
             )
             if identifier not in existing_ids:
-                return fixed_identifiers, identifier
+                return working_fixed_identifiers, identifier
 
     def _generate_unit_data(self) -> str:
         """
