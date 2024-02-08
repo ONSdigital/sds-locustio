@@ -1,7 +1,7 @@
 import json
 import logging
-import time
 import os
+import time
 from pathlib import Path
 
 import requests

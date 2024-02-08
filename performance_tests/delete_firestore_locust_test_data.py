@@ -41,7 +41,7 @@ def delete_collection_in_batches(
 
     if doc_count < batch_size:
         return None
-        
+
     return delete_collection_in_batches(collection_ref, survey_id, batch_size)
 
 
