@@ -1,97 +1,85 @@
-import json
 import os
+import subprocess
 
 import google.oauth2.id_token
-import requests
-from locust import HttpUser, task
+from config import config
+from json_generator import JsonGenerator
+from locust import HttpUser, events, task
+from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
-
-def get_value_from_env(env_value, default_value="") -> str:
-    """
-    Method to determine if a desired enviroment variable has been set and return it.
-    If an enviroment variable or default value are not set an expection is raised.
-
-    Parameters:
-        env_value: value to check environment for
-        default_value: optional argument to allow defaulting of values
-
-    Returns:
-        str: the environment value corresponding to the input
-    """
-    value = os.environ.get(env_value)
-    if value:
-        return value
-    elif default_value != "":
-        return default_value
-    else:
-        raise Exception(
-            f"The environment variable {env_value} must be set to proceed",
-        )
-
-
-class Config:
-    BASE_URL = get_value_from_env("BASE_URL", "http://127.0.0.1:3000")
-    PROJECT_ID = get_value_from_env("PROJECT_ID", "ons-sds-sandbox-01")
-    TEST_SCHEMA_FILE = "schema.json"
-    OAUTH_CLIENT_ID = get_value_from_env(
-        "OAUTH_CLIENT_ID",
-        "localhost",
-    )
-
-
-config = Config()
 BASE_URL = config.BASE_URL
 
 if config.OAUTH_CLIENT_ID == "localhost":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
 
-auth_req = google.auth.transport.requests.Request()
-auth_token = google.oauth2.id_token.fetch_id_token(
-    auth_req, audience=config.OAUTH_CLIENT_ID
-)
-HEADERS = {"Authorization": f"Bearer {auth_token}"}
 
-
-# To be done - delete the documents created in the 'schemas' collection during the performance testing
-def delete_docs(survey_id):
-    """
-    Deletes firestore documents
-
-    Args:
-        survey_id (str)
-    """
-
-
-def post_sds_v1(payload):
-    """Creates schema for testing purposes
-
-    Args:
-        payload (json): json to be sent to API
-
-    Returns:
-        obj: response object
-    """
-    return requests.post(
-        f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-        headers=HEADERS,
-        json=payload,
-        timeout=60,
+def set_header():
+    """Set header for SDS requests"""
+    auth_req = google.auth.transport.requests.Request()
+    auth_token = google.oauth2.id_token.fetch_id_token(
+        auth_req, audience=config.OAUTH_CLIENT_ID
     )
+    return {"Authorization": f"Bearer {auth_token}"}
 
 
-def load_json(filepath: str) -> dict:
+HEADERS = set_header()
+DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
+TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
+SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
+
+locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
+json_generator = JsonGenerator(
+    locust_test_id,
+    config.TEST_DATASET_FILE,
+    config.DATASET_ENTRIES,
+    config.FIXED_IDENTIFIERS,
+)
+
+SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+
+
+@events.test_start.add_listener
+def on_test_start(**kwargs):
     """
-    Method to load json from a file.
-
-    Parameters:
-        filepath: string specifying the location of the file to be loaded.
-
-    Returns:
-        dict: the json object from the specified file.
+    Function to run before the test starts
     """
-    with open(filepath) as f:
-        return json.load(f)
+    # Generate dataset file
+    json_generator.generate_dataset_file()
+
+    # Publish 1 schema for endpoint testing
+    locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
+
+    # Publish 1 dataset for endpoint testing
+    locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+
+
+@events.test_stop.add_listener
+def on_test_stop(**kwargs):
+    """
+    Function to run after the test stops
+    """
+    # Delete locust test schema files from SDS bucket
+    locust_helper.delete_docs(locust_test_id, SCHEMA_BUCKET)
+
+    # Delete generated dataset file
+    locust_helper.delete_local_file(config.TEST_DATASET_FILE)
+
+    # Delete locust test schema and dataset data from FireStore
+    # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+    if config.OAUTH_CLIENT_ID != "localhost":
+        subprocess.run(
+            [
+                "python",
+                "delete_firestore_locust_test_data.py",
+                "--project_id",
+                config.PROJECT_ID,
+                "--database_name",
+                DATABASE_NAME,
+                "--survey_id",
+                locust_test_id,
+            ]
+        )
 
 
 class PerformanceTests(HttpUser):
@@ -101,32 +89,65 @@ class PerformanceTests(HttpUser):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
 
-        self.post_sds_schema_payload = load_json(config.TEST_SCHEMA_FILE)
-        self.request_headers = HEADERS
+        self.post_sds_schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+        self.dataset_id = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
 
     def on_start(self):
-        """Create a schema to find"""
         super().on_start()
-        post_sds_v1(self.post_sds_schema_payload)
 
     def on_stop(self):
-        """Delete any schemas we've created"""
         super().on_stop()
-        # delete_docs(self.survey_id)
 
+    ### Performance tests ###
+
+    # Test post schema endpoint
     @task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         self.client.post(
             f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
             json=self.post_sds_schema_payload,
-            headers=HEADERS,
+            headers=set_header(),
         )
 
+    # Test get schema metadata endpoint
     @task
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
             f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
-            headers=HEADERS,
+            headers=set_header(),
         )
+
+    # Test get schema endpoint
+    @task
+    def http_get_sds_schema_v1(self):
+        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+            headers=set_header(),
+        )
+
+    # Test get schema v2 endpoint
+    # Wait to be done - get schema v2 endpoint is not ready yet
+
+    # Test dataset metadata endpoint
+    @task
+    def http_get_sds_dataset_metadata_v1(self):
+        """"""
+        self.client.get(
+            f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
+            headers=set_header(),
+        )
+
+    # Test unit data endpoint
+    @task
+    def http_get_sds_unit_data_v1(self):
+        """Performance test task for the `get_unit_data_from_sds` function"""
+        self.client.get(
+            f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
+            headers=set_header(),
+        )
+
+    # Test publish dataset endpoint
+    # Wait to be done - publish dataset endpoint is not ready yet

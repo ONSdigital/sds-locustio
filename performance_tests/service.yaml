@@ -23,7 +23,7 @@ spec:
       containers:
         - env:
             - name: BASE_URL
-              value: https://34.149.110.167.nip.io
+              value: https://34.160.14.110.nip.io
             - name: PROJECT_ID
               value: ons-sds-sandbox-01
             - name: OAUTH_CLIENT_ID
@@ -42,7 +42,7 @@ spec:
             tcpSocket:
               port: 8089
             timeoutSeconds: 240
-      serviceAccountName: 293516424663-compute@developer.gserviceaccount.com
+      serviceAccountName: ons-sds-sandbox-01@appspot.gserviceaccount.com
       timeoutSeconds: 300
   traffic:
     - latestRevision: true
