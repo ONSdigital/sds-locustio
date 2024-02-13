@@ -57,12 +57,14 @@ class LocustHelper:
 
         """
         try:
-            requests.post(
+            response = requests.post(
                 f"{self.base_url}/v1/schema?survey_id={self.locust_test_id}",
                 headers=self.headers,
                 json=payload,
                 timeout=60,
             )
+            json_response = response.json
+            return json_response["guid"]
         except Exception as e:
             logging.error(f"Locust on start: Error spinning up schema for testing: {e}")
             raise RuntimeError(
