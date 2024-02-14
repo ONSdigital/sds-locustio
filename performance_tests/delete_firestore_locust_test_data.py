@@ -1,5 +1,5 @@
 import argparse
-
+import logging
 from google.cloud import firestore
 
 
@@ -22,7 +22,8 @@ def delete_firestore_locust_test_data(
         datasets_collection = client.collection("datasets")
         delete_collection_in_batches(datasets_collection, survey_id, 100)
     except Exception as e:
-        print("Failed to delete firestore locust test data")
+        logging.error(f"Error. Failed to delete firestore locust test data {e}")
+        raise RuntimeError(f"Failed to delete firestore locust test data {e}")
 
 
 def delete_collection_in_batches(
@@ -67,3 +68,5 @@ if __name__ == "__main__":
     delete_firestore_locust_test_data(
         args.project_id, args.database_name, args.survey_id
     )
+
+    logging.info("locust test data deleted successfully")
