@@ -57,5 +57,38 @@ gcloud builds submit --tag gcr.io/$PROJECT_ID/locust-tasks:latest performance_te
 ### Deploy the container to cloud run
 
 ```bash
-gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,DATASET_ENTRIES=$DATASET_ENTRIES --region=europe-west2 --port=8089 --service-account=$PROJECT_ID@appspot.gserviceaccount.com
+gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,DATASET_ENTRIES=$DATASET_ENTRIES --region=europe-west2 --port=8089 --service-account=cloudbuild-sa@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated
 ```
+
+### Add permission
+Since the Locust app requires authentication, one will have to grant Cloud Run Admin role to their GCP account on the Locust app
+By gcloud CLI:
+
+```bash
+gcloud run services add-iam-policy-binding locust-tasks --project=$PROJECT_ID --member='user:<youremail@address>' --role='roles/run.admin' --region='europe-west2'
+```
+
+Alternatively, role can be granted on GCP console:
+1) Go to Cloud Run
+2) Select locust-tasks app
+3) Click Permission
+4) Add principal <youremail@address> with role Cloud Run Admin
+
+
+### Access the locust app
+Run on local terminal:
+
+```bash
+gcloud run services proxy locust-tasks --project $PROJECT_ID --region europe-west2
+```
+
+Then open a web browser and access URL: http://127.0.0.1:8080/
+
+Alternatively, when running on cloud terminal:
+
+```bash
+export PROJECT_ID=$(gcloud config get project)
+gcloud run services proxy locust-tasks --project $PROJECT_ID --region europe-west2
+```
+
+If run on cloud terminal, click the link http://127.0.0.1:8080/ displayed in the terminal
