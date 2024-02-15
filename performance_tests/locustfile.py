@@ -38,7 +38,7 @@ json_generator = JsonGenerator(
 )
 
 SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-SCHEMA_GUID = ""
+SCHEMA_GUID = "UNASSIGNED"
 
 
 @events.test_start.add_listener
@@ -50,8 +50,8 @@ def on_test_start(**kwargs):
     json_generator.generate_dataset_file()
 
     # Publish 1 schema for endpoint testing
+    global SCHEMA_GUID
     SCHEMA_GUID = locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
-
 
     # Publish 1 dataset for endpoint testing
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
@@ -66,14 +66,14 @@ def on_test_stop(**kwargs):
     locust_helper.delete_local_file(config.TEST_DATASET_FILE)
     logging.info("dataset file for publish is deleted")
 
-   
     if config.OAUTH_CLIENT_ID != "localhost":
         # Delete locust test schema files from SDS bucket
         locust_helper.delete_docs(locust_test_id, SCHEMA_BUCKET)
         logging.info("schema files deleted")
 
         # Delete locust test schema and dataset data from FireStore
-        # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+        # Note: This is a workaround to delete data from FireStore.
+        # Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
         logging.info("begin deleting firestore locust test data")
         subprocess.run(
             [
@@ -105,17 +105,16 @@ class PerformanceTests(HttpUser):
     def on_stop(self):
         super().on_stop()
 
-    ### Performance tests ###
-
+    # Performance tests
     # Test post schema endpoint
-    # @task
-    # def http_post_sds_v1(self):
-    #     """Performance test task for the `http_post_sds_v1` function"""
-    #     self.client.post(
-    #         f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-    #         json=self.post_sds_schema_payload,
-    #         headers=set_header(),
-    #     )
+    @task
+    def http_post_sds_v1(self):
+        """Performance test task for the `http_post_sds_v1` function"""
+        self.client.post(
+            f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+            json=self.post_sds_schema_payload,
+            headers=set_header(),
+        )
 
     # Test get schema metadata endpoint
     @task
@@ -136,9 +135,8 @@ class PerformanceTests(HttpUser):
         )
 
     # Test get schema v2 endpoint
-    # Wait to be done - get schema v2 endpoint is not ready yet
     @task
-    def http_get_sds_schema_v1(self):
+    def http_get_sds_schema_v2(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         self.client.get(
             f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
@@ -162,6 +160,3 @@ class PerformanceTests(HttpUser):
             f"{BASE_URL}/v1/unit_data?dataset_id={self.dataset_id}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
             headers=set_header(),
         )
-
-    # Test publish dataset endpoint
-    # Wait to be done - publish dataset endpoint is not ready yet

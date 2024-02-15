@@ -11,7 +11,7 @@ from google.cloud import exceptions, storage
 
 class LocustHelper:
     def __init__(
-        self, base_url: str, headers: str, database_name: str, locust_test_id: str
+        self, base_url: str, headers: dict, database_name: str, locust_test_id: str
     ):
         self.base_url = base_url
         self.headers = headers
@@ -49,11 +49,14 @@ class LocustHelper:
             raise RuntimeError(f"Error deleting file: {e}")
 
     # Create a schema record before testing
-    def create_schema_record_before_test(self, payload: str) -> None:
+    def create_schema_record_before_test(self, payload: dict) -> str:
         """Creates schema for testing purposes
 
         Args:
             payload (json): json to be sent to API
+
+        Returns:
+            str: schema guid
 
         """
         try:
@@ -63,7 +66,7 @@ class LocustHelper:
                 json=payload,
                 timeout=60,
             )
-            json_response = response.json
+            json_response = response.json()
             return json_response["guid"]
         except Exception as e:
             logging.error(f"Locust on start: Error spinning up schema for testing: {e}")
@@ -97,7 +100,7 @@ class LocustHelper:
             )
 
     # Post dataset to SDS, only for localhost
-    def post_dataset_to_local_endpoint(self, payload: str) -> None:
+    def post_dataset_to_local_endpoint(self, payload: dict) -> None:
         """
         Publishes dataset to sds in local environment
 
@@ -106,7 +109,7 @@ class LocustHelper:
 
         """
         requests.post(
-            f"http://localhost:3006/",
+            "http://localhost:3006/",
             headers=self.headers,
             json=payload,
             timeout=60,
@@ -126,9 +129,9 @@ class LocustHelper:
                 bucket_name,
             )
             return bucket
-        except exceptions.NotFound as e:
-            logging.error(f"PT: Error getting bucket {bucket_name}.")
-            raise RuntimeError(f"Error getting bucket {bucket_name}.")
+        except exceptions.NotFound:
+            logging.error(f"PT: Error getting bucket: {bucket_name}.")
+            raise RuntimeError(f"Error getting bucket: {bucket_name}.")
 
     # Upload a file to SDS bucket
     def upload_file_to_bucket(self, file: str, bucket_name: str) -> None:
@@ -147,7 +150,7 @@ class LocustHelper:
                 file,
                 content_type="application/json",
             )
-        except exceptions as e:
+        except exceptions:
             raise RuntimeError(f"Error uploading file {file}.")
 
     # Get dataset id from spin up dataset
@@ -206,9 +209,6 @@ class LocustHelper:
         """
         Get dataset id from local endpoint
 
-        Args:
-            base_url (str): the base url of the SDS
-
         Returns:
             str: the dataset id
         """
@@ -221,7 +221,7 @@ class LocustHelper:
             for dataset_metadata in response.json():
                 return dataset_metadata["dataset_id"]
         else:
-            raise RuntimeError(f"Error getting dataset id from local endpoint.")
+            raise RuntimeError("Error getting dataset id from local endpoint.")
 
     def load_json(self, filepath: str) -> dict:
         """
