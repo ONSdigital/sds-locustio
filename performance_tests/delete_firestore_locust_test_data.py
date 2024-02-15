@@ -1,5 +1,6 @@
 import argparse
 import logging
+
 from google.cloud import firestore
 
 
@@ -56,13 +57,13 @@ if __name__ == "__main__":
 
     # Check if the required arguments are given
     if not args.survey_id:
-        print("Error. No survey_id is given to delete data")
+        logging.error("No survey_id is given to delete data")
         exit()
     if not args.project_id:
-        print("Error. No project_id is given to delete data")
+        logging.error("No project_id is given to delete data")
         exit()
     if not args.database_name:
-        print("Error. No database_name is given to delete data")
+        logging.error("No database_name is given to delete data")
         exit()
 
     delete_firestore_locust_test_data(

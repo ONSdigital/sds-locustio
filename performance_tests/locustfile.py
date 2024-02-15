@@ -1,6 +1,7 @@
+import logging
 import os
 import subprocess
-import logging
+
 import google.oauth2.id_token
 from config import config
 from json_generator import JsonGenerator
@@ -40,7 +41,7 @@ SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
 
 
 @events.test_start.add_listener
-def on_test_start(environment, **kwargs):
+def on_test_start(**kwargs):
     """
     Function to run before the test starts
     """
@@ -55,23 +56,24 @@ def on_test_start(environment, **kwargs):
 
 
 @events.test_stop.add_listener
-def on_test_stop(environment, **kwargs):
+def on_test_stop(**kwargs):
     """
     Function to run after the test stops
     """
     # Delete generated dataset file
     locust_helper.delete_local_file(config.TEST_DATASET_FILE)
-    logging.info("dataset file deleted")
+    logging.info("dataset file for publish is deleted")
 
-    # Delete locust test schema and dataset data from FireStore
-    # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+   
     if config.OAUTH_CLIENT_ID != "localhost":
         # Delete locust test schema files from SDS bucket
         locust_helper.delete_docs(locust_test_id, SCHEMA_BUCKET)
         logging.info("schema files deleted")
 
+        # Delete locust test schema and dataset data from FireStore
+        # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
         logging.info("begin deleting firestore locust test data")
-        feedback = subprocess.check_output(
+        subprocess.run(
             [
                 "python",
                 "delete_firestore_locust_test_data.py",
