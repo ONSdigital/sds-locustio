@@ -168,7 +168,7 @@ class LocustHelper:
     def wait_and_get_dataset_id(
         self,
         filename: str,
-        attempts: int = 5,
+        attempts: int = 6,
         backoff: int = 0.5,
     ) -> str:
         """
