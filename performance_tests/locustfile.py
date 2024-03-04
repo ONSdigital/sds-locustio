@@ -39,6 +39,18 @@ json_generator = JsonGenerator(
 )
 
 SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+SCHEMA_GUID = "UNASSIGNED"
+
+
+@events.init_command_line_parser.add_listener
+def _(parser):
+    # Add custom arguments to choose endpoints for testing
+    parser.add_argument(
+        "--test-endpoints",
+        choices=["all", "exclude_post_schema", "only_post_schema", "only_unit_data"],
+        default="all",
+        help="Choose endpoints to test",
+    )
 
 
 @events.init_command_line_parser.add_listener
@@ -61,7 +73,8 @@ def on_test_start(**kwargs):
     json_generator.generate_dataset_file()
 
     # Publish 1 schema for endpoint testing
-    locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
+    global SCHEMA_GUID
+    SCHEMA_GUID = locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
 
     # Publish 1 dataset for endpoint testing
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
@@ -86,7 +99,8 @@ def on_test_stop(**kwargs):
         logging.info("schema files deleted")
 
         # Delete locust test schema and dataset data from FireStore
-        # Note: This is a workaround to delete data from FireStore. Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
+        # Note: This is a workaround to delete data from FireStore.
+        # Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
         logging.info("begin deleting firestore locust test data")
         subprocess.run(
             [
@@ -117,8 +131,7 @@ class PerformanceTests(HttpUser):
     def on_stop(self):
         super().on_stop()
 
-    ### Performance tests ###
-
+    # Performance tests
     # Test post schema endpoint
     @task(1)
     def http_post_sds_v1(self):
@@ -166,7 +179,13 @@ class PerformanceTests(HttpUser):
             )
 
     # Test get schema v2 endpoint
-    # Wait to be done - get schema v2 endpoint is not ready yet
+    @task
+    def http_get_sds_schema_v2(self):
+        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        self.client.get(
+            f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
+            headers=set_header(),
+        )
 
     # Test dataset metadata endpoint
     @task(10)
