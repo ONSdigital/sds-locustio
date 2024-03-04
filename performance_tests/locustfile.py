@@ -133,7 +133,7 @@ class PerformanceTests(HttpUser):
 
     # Performance tests
     # Test post schema endpoint
-    @task(1)
+    @task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         if (
@@ -149,7 +149,7 @@ class PerformanceTests(HttpUser):
             )
 
     # Test get schema metadata endpoint
-    @task(10)
+    @task
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
@@ -164,7 +164,7 @@ class PerformanceTests(HttpUser):
             )
 
     # Test get schema endpoint
-    @task(10)
+    @task
     def http_get_sds_schema_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
@@ -182,13 +182,19 @@ class PerformanceTests(HttpUser):
     @task
     def http_get_sds_schema_v2(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-        self.client.get(
-            f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
-            headers=set_header(),
-        )
+        if (
+            self.environment.parsed_options.test_endpoints == "only_unit_data"
+            or self.environment.parsed_options.test_endpoints == "only_post_schema"
+        ):
+            pass
+        else:
+            self.client.get(
+                f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
+                headers=set_header(),
+            )
 
     # Test dataset metadata endpoint
-    @task(10)
+    @task
     def http_get_sds_dataset_metadata_v1(self):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
@@ -203,7 +209,7 @@ class PerformanceTests(HttpUser):
             )
 
     # Test unit data endpoint
-    @task(30)
+    @task
     def http_get_sds_unit_data_v1(self):
         """Performance test task for the `get_unit_data_from_sds` function"""
         if self.environment.parsed_options.test_endpoints == "only_post_schema":
