@@ -51,6 +51,7 @@ DATASET_ENTRIES=1000
 ```
 
 ```bash
+gcloud config set project $PROJECT_ID
 gcloud builds submit --tag gcr.io/$PROJECT_ID/locust-tasks:latest performance_tests/
 ```
 
