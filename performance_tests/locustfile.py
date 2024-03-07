@@ -34,7 +34,6 @@ locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
 json_generator = JsonGenerator(
     locust_test_id,
     config.TEST_DATASET_FILE,
-    config.DATASET_ENTRIES,
     config.FIXED_IDENTIFIERS,
 )
 
@@ -47,30 +46,25 @@ def _(parser):
     # Add custom arguments to choose endpoints for testing
     parser.add_argument(
         "--test-endpoints",
-        choices=["all", "exclude_post_schema", "only_post_schema", "only_unit_data"],
+        choices=["all", "exclude_post_schema", "post_schema", "get_unit_data", "get_dataset_metadata", "get_schema_metadata", "get_schema", "get_schema_v2", "get_survey_list"],
         default="all",
         help="Choose endpoints to test",
     )
-
-
-@events.init_command_line_parser.add_listener
-def _(parser):
-    # Add custom arguments to choose endpoints for testing
     parser.add_argument(
-        "--test-endpoints",
-        choices=["all", "exclude_post_schema", "only_post_schema", "only_unit_data"],
-        default="all",
-        help="Choose endpoints to test",
+        "--dataset_entries",
+        type=int,
+        default=1000,
+        help="Number of unit data in the generated dataset between 10 to 90000",
     )
 
 
 @events.test_start.add_listener
-def on_test_start(**kwargs):
+def on_test_start(environment, **kwargs):
     """
     Function to run before the test starts
     """
     # Generate dataset file
-    json_generator.generate_dataset_file()
+    json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
 
     # Publish 1 schema for endpoint testing
     global SCHEMA_GUID
@@ -137,85 +131,106 @@ class PerformanceTests(HttpUser):
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "only_unit_data"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "post_schema"
         ):
-            pass
-        else:
             self.client.post(
                 f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
                 json=self.post_sds_schema_payload,
                 headers=set_header(),
             )
+        else:
+            pass
 
     # Test get schema metadata endpoint
     @task
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "only_unit_data"
-            or self.environment.parsed_options.test_endpoints == "only_post_schema"
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_schema_metadata"
         ):
-            pass
-        else:
             self.client.get(
                 f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
                 headers=set_header(),
             )
+        else:
+            pass
 
     # Test get schema endpoint
     @task
     def http_get_sds_schema_v1(self):
-        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        """Performance test task for the `http_get_sds_schema_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "only_unit_data"
-            or self.environment.parsed_options.test_endpoints == "only_post_schema"
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_schema"
         ):
-            pass
-        else:
             self.client.get(
                 f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
                 headers=set_header(),
             )
+        else:
+            pass
 
     # Test get schema v2 endpoint
     @task
     def http_get_sds_schema_v2(self):
-        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
+        """Performance test task for the `http_get_sds_schema_v2` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "only_unit_data"
-            or self.environment.parsed_options.test_endpoints == "only_post_schema"
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_schema_v2"
         ):
-            pass
-        else:
             self.client.get(
                 f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
                 headers=set_header(),
             )
+        else:
+            pass
 
     # Test dataset metadata endpoint
     @task
     def http_get_sds_dataset_metadata_v1(self):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "only_unit_data"
-            or self.environment.parsed_options.test_endpoints == "only_post_schema"
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_dataset_metadata"
         ):
-            pass
-        else:
             self.client.get(
                 f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
                 headers=set_header(),
             )
+        else:
+            pass
 
     # Test unit data endpoint
     @task
     def http_get_sds_unit_data_v1(self):
-        """Performance test task for the `get_unit_data_from_sds` function"""
-        if self.environment.parsed_options.test_endpoints == "only_post_schema":
-            pass
-        else:
+        """Performance test task for the `http_get_sds_unit_data_v1` function"""
+        if (
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_unit_data"
+        ):
             self.client.get(
                 f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
                 headers=set_header(),
             )
+        else:
+            pass
+
+    # Test get survey list endpoint
+    @task
+    def http_get_sds_survey_list_v1(self):
+        """Performance test task for the `http_get_sds_survey_list_v1` function"""
+        if (
+            self.environment.parsed_options.test_endpoints == "all"
+            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
+            or self.environment.parsed_options.test_endpoints == "get_survey_list"
+        ):
+            self.client.get(f"{BASE_URL}/v1/survey_list", headers=set_header())
+        else:
+            pass

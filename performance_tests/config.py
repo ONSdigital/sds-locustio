@@ -11,7 +11,6 @@ class Config:
         "localhost",
     )
     DATABASE = get_value_from_env("DATABASE", "sds")
-    DATASET_ENTRIES = get_value_from_env("DATASET_ENTRIES", "1000")
     FIXED_IDENTIFIERS = ["43532", "65871"]
 
 
