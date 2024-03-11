@@ -19,7 +19,6 @@ pip install -r performance_tests/requirements.txt
 
 ```bash
 export OAUTH_CLIENT_ID=localhost
-export DATASET_ENTRIES=100
 ```
 
 ### Start the locust local web server

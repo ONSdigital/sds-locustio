@@ -37,7 +37,6 @@ json_generator = JsonGenerator(
     config.FIXED_IDENTIFIERS,
 )
 
-SCHEMA_PAYLOAD = locust_helper.load_json(config.TEST_SCHEMA_FILE)
 SCHEMA_GUID = "UNASSIGNED"
 
 
@@ -68,7 +67,8 @@ def on_test_start(environment, **kwargs):
 
     # Publish 1 schema for endpoint testing
     global SCHEMA_GUID
-    SCHEMA_GUID = locust_helper.create_schema_record_before_test(SCHEMA_PAYLOAD)
+    schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+    SCHEMA_GUID = locust_helper.create_schema_record_before_test(schema_payload)
 
     # Publish 1 dataset for endpoint testing
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
