@@ -8,22 +8,23 @@ class JsonGenerator:
         self,
         survey_id: str,
         file_name: str,
-        dataset_entries: int,
         fixed_identifiers: list[str],
     ):
         self.survey_id = survey_id
         self.file_name = file_name
-        self.dataset_entries = int(dataset_entries)
         self.fixed_identifiers = fixed_identifiers
 
-    def generate_dataset_file(self) -> None:
+    def generate_dataset_file(self, dataset_entries: int) -> None:
         """
         Generate the dataset file.
         """
+        if dataset_entries < 10 or dataset_entries > 90000:
+            raise ValueError("dataset_entries must be between 10 and 90000")
+        
         try:
             if not Path(self.file_name).is_file():
                 json_data = self._generate_json_data(
-                    self.dataset_entries, self.survey_id, self.fixed_identifiers
+                    dataset_entries, self.survey_id, self.fixed_identifiers
                 )
 
                 # Specify the output file name
@@ -38,14 +39,15 @@ class JsonGenerator:
             print(f"Error generating dataset file: {e}")
 
     def _generate_json_data(
-        self, entries_count: int, survey_id: str, fixed_identifiers: list[str]
+        self, dataset_entries: int, survey_id: str, fixed_identifiers: list[str]
     ) -> dict[str, any]:
         """
         Generate the JSON data for the dataset file.
 
         Args:
-            entries_count (int): the number of unit data entries to generate
+            dataset_entries (int): the number of unit data entries to generate
             survey_id (str): the survey id (locust test id)
+            fixed_identifiers (list[str]): the list of fixed identifiers
 
         Returns:
             dict[str, any]: the JSON data for the dataset file
@@ -60,12 +62,12 @@ class JsonGenerator:
 
         unique_ids = set()
         working_fixed_identifiers = fixed_identifiers.copy()
-        for _ in range(entries_count):
+        for _ in range(dataset_entries):
             working_fixed_identifiers, identifier = self._generate_unique_identifier(
                 unique_ids, working_fixed_identifiers
             )
             unique_ids.add(identifier)
-            unit_data = self._generate_unit_data()
+            unit_data = self._generate_unit_data(dataset_entries)
             data["data"].append({"identifier": identifier, "unit_data": unit_data})
 
         return data
@@ -92,9 +94,9 @@ class JsonGenerator:
             if identifier not in existing_ids:
                 return working_fixed_identifiers, identifier
 
-    def _generate_unit_data(self) -> str:
+    def _generate_unit_data(self, dataset_entries: int) -> str:
         """
         Generate the unit data content for the dataset file.
         """
         # Customize this function to generate whatever unit data you need
-        return "Example data " + str(random.randint(1, self.dataset_entries))
+        return "Example data " + str(random.randint(1, dataset_entries))

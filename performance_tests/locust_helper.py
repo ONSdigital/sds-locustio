@@ -173,8 +173,8 @@ class LocustHelper:
     def wait_and_get_dataset_id(
         self,
         filename: str,
-        attempts: int = 6,
-        backoff: int = 0.5,
+        attempts: int = 10,
+        backoff: int = 0.25,
     ) -> str:
         """
         Wait and get dataset id from SDS
