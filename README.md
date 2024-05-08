@@ -49,6 +49,7 @@ OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercon
 ```
 
 ```bash
+gcloud auth login
 gcloud config set project $PROJECT_ID
 gcloud builds submit --tag gcr.io/$PROJECT_ID/locust-tasks:latest performance_tests/
 ```
@@ -82,6 +83,7 @@ gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --
 ```
 
 ### Add permission
+
 Since the Locust app requires authentication, one will have to grant Cloud Run Admin role to their GCP account on the Locust app
 By gcloud CLI:
 
@@ -92,13 +94,14 @@ gcloud run services add-iam-policy-binding locust-tasks --project=$PROJECT_ID --
 ```
 
 Alternatively, role can be granted on GCP console:
+
 1) Go to Cloud Run
 2) Select locust-tasks app
 3) Click Permission
 4) Add principal <youremail@address> with role Cloud Run Admin
 
-
 ### Access the locust app
+
 Run on local terminal:
 
 ```bash

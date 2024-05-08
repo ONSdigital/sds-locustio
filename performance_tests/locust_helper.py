@@ -11,10 +11,9 @@ from google.cloud import exceptions, storage
 
 class LocustHelper:
     def __init__(
-        self, base_url: str, headers: dict, database_name: str, locust_test_id: str
+        self, base_url: str, database_name: str, locust_test_id: str
     ):
         self.base_url = base_url
-        self.headers = headers
         self.database_name = database_name
         self.locust_test_id = locust_test_id
 
@@ -49,7 +48,7 @@ class LocustHelper:
             raise RuntimeError(f"Error deleting file: {e}")
 
     # Create a schema record before testing
-    def create_schema_record_before_test(self, payload: dict) -> str:
+    def create_schema_record_before_test(self, headers: str, payload: dict) -> str:
         """Creates schema for testing purposes
 
         Args:
@@ -62,7 +61,7 @@ class LocustHelper:
         try:
             response = requests.post(
                 f"{self.base_url}/v1/schema?survey_id={self.locust_test_id}",
-                headers=self.headers,
+                headers=headers,
                 json=payload,
                 timeout=60,
             )
@@ -100,7 +99,7 @@ class LocustHelper:
             )
 
     # Post dataset to SDS, only for localhost
-    def post_dataset_to_local_endpoint(self, payload: dict) -> None:
+    def post_dataset_to_local_endpoint(self, headers: str, payload: dict) -> None:
         """
         Publishes dataset to sds in local environment
 
@@ -110,7 +109,7 @@ class LocustHelper:
         """
         requests.post(
             "http://localhost:3006/",
-            headers=self.headers,
+            headers=headers,
             json=payload,
             timeout=60,
         )
@@ -154,7 +153,7 @@ class LocustHelper:
             raise RuntimeError(f"Error uploading file {file}.")
 
     # Get dataset id from spin up dataset
-    def get_dataset_id(self, filename: str) -> str:
+    def get_dataset_id(self, headers: str, filename: str) -> str:
         """
         Get dataset id from the dataset.json file
 
@@ -164,14 +163,12 @@ class LocustHelper:
         Returns:
             str: the dataset id
         """
-        if config.OAUTH_CLIENT_ID == "localhost":
-            return self.get_dataset_id_from_local()
-        else:
-            return self.wait_and_get_dataset_id(filename)
+        return self.wait_and_get_dataset_id(headers, filename)
 
     # Wait and get dataset id from SDS
     def wait_and_get_dataset_id(
         self,
+        headers: str,
         filename: str,
         attempts: int = 10,
         backoff: int = 0.25,
@@ -190,7 +187,7 @@ class LocustHelper:
         while attempts != 0:
             response = requests.get(
                 f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}",
-                headers=self.headers,
+                headers=headers,
             )
 
             if response.status_code == 200:

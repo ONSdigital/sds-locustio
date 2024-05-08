@@ -24,13 +24,12 @@ def set_header():
     return {"Authorization": f"Bearer {auth_token}"}
 
 
-HEADERS = set_header()
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
 TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
 SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 DATASET_ID = ""
 
-locust_helper = LocustHelper(BASE_URL, HEADERS, DATABASE_NAME, locust_test_id)
+locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, locust_test_id)
 json_generator = JsonGenerator(
     locust_test_id,
     config.TEST_DATASET_FILE,
@@ -68,14 +67,17 @@ def on_test_start(environment, **kwargs):
     # Publish 1 schema for endpoint testing
     global SCHEMA_GUID
     schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-    SCHEMA_GUID = locust_helper.create_schema_record_before_test(schema_payload)
+    SCHEMA_GUID = locust_helper.create_schema_record_before_test(set_header(),schema_payload)
 
     # Publish 1 dataset for endpoint testing
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
 
     # Get dataset ID
     global DATASET_ID
-    DATASET_ID = locust_helper.get_dataset_id(config.TEST_DATASET_FILE)
+    if config.OAUTH_CLIENT_ID == "localhost":
+        DATASET_ID = locust_helper.get_dataset_id_from_local()
+    else:
+        DATASET_ID = locust_helper.get_dataset_id(set_header(), config.TEST_DATASET_FILE)
 
 
 @events.test_stop.add_listener
