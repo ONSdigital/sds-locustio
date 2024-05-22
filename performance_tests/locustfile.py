@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import datetime
 
 import google.oauth2.id_token
 from config import config
@@ -13,6 +14,12 @@ BASE_URL = config.BASE_URL
 
 if config.OAUTH_CLIENT_ID == "localhost":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
+
+# Set the subpath for the csv file with current timestamp if headless mode is enabled
+if os.environ.get("LOCUST_HEADLESS") == "true":
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    subpath = timestamp + "/result"
+    os.environ["LOCUST_CSV"] += subpath
 
 
 # Token expiry time is 1 hour and that will be the max time for the test at the moment

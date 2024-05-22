@@ -147,14 +147,14 @@ LOCUST_LOCUSTFILE=locustfile.py
 LOCUST_USERS=30
 LOCUST_SPAWN_RATE=10
 LOCUST_RUN_TIME=1m
-LOCUST_CSV=locust_tasks_result/result
+LOCUST_CSV=locust_tasks_result/
 LOCUST_TEST_ENDPOINTS=exclude_post_schema
 LOCUST_DATASET_ENTRIES=1000
 ```
 
 #### Deploy Cloud Run Job and execute
 
-The `--execute-now` flag can be omitted to if the job is not required to be executed immediately after deploy. Omit the flag for first time deployment
+The `--execute-now` flag can be omitted if the job is not required to be executed immediately after deploy. Always omit the flag for first time deployment
 
 ```bash
 gcloud run jobs deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=$LOCUST_HEADLESS,LOCUST_LOCUSTFILE=$LOCUST_LOCUSTFILE,LOCUST_USERS=$LOCUST_USERS,LOCUST_SPAWN_RATE=$LOCUST_SPAWN_RATE,LOCUST_RUN_TIME=$LOCUST_RUN_TIME,LOCUST_CSV=$LOCUST_CSV,LOCUST_TEST_ENDPOINTS=$LOCUST_TEST_ENDPOINTS,LOCUST_DATASET_ENTRIES=$LOCUST_DATASET_ENTRIES --region=europe-west2 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --max-retries=0 --execute-now
