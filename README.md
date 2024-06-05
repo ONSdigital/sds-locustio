@@ -49,6 +49,7 @@ OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercon
 ```
 
 ```bash
+gcloud auth login
 gcloud config set project $PROJECT_ID
 gcloud builds submit --tag gcr.io/$PROJECT_ID/locust-tasks:latest performance_tests/
 ```
@@ -67,21 +68,26 @@ gcloud iam service-accounts create locustrun --project=$PROJECT_ID --description
 
 #### Assign required roles to locustrun service account
 
-Assign storage admin, firebase admin, and IAP-secured web app user role to locustrun service account
+Assign storage admin, firebase admin, and IAP-secured web app user role to locustrun service account.
+
+To support Cloud Run Jobs in running Locust in headless mode, also assign Cloud Run Developer and Service Account User roles to locustrun service account.
 
 ```bash
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/storage.admin"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/firebase.admin"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iap.httpsResourceAccessor"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/run.developer"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
 ```
 
 ### Deploy the container to cloud run
 
 ```bash
-gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated
+gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=1 --max-instances=100
 ```
 
 ### Add permission
+
 Since the Locust app requires authentication, one will have to grant Cloud Run Admin role to their GCP account on the Locust app
 By gcloud CLI:
 
@@ -92,13 +98,14 @@ gcloud run services add-iam-policy-binding locust-tasks --project=$PROJECT_ID --
 ```
 
 Alternatively, role can be granted on GCP console:
+
 1) Go to Cloud Run
 2) Select locust-tasks app
 3) Click Permission
 4) Add principal <youremail@address> with role Cloud Run Admin
 
-
 ### Access the locust app
+
 Run on local terminal:
 
 ```bash
@@ -115,3 +122,52 @@ gcloud run services proxy locust-tasks --project $PROJECT_ID --region europe-wes
 ```
 
 If run on cloud terminal, check on terminal and click the link http://127.0.0.1:8080/
+
+### Deploy and execute locust in headless mode
+
+Headless mode allow Locust to be run without the WebUI
+
+#### Set up the environment variables
+
+
+| Var Name               | Description                                                          | Value                                                                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Locust_Headless        | A flag to enable headless mode                                       | true                                                                                                                                                          |
+| Locust_Locustfile      | Location of the locust file                                          | locustfile.py                                                                                                                                                 |
+| Locust_Users           | Number of concurrent users                                           | User defined                                                                                                                                                  |
+| Locust_Spawn_Rate      | Rate to spawn users                                                  | User defined                                                                                                                                                  |
+| Locust_Run_Time        | Stop after the specified amount of time                              | User defined                                                                                                                                                  |
+| Locust_CSV             | CSV filename that store request stats                                | locust_tasks_result                                                                                                                                           |
+| Locust_Test_Endpoints  | Custom parameter to select test endpoints                            | exclude_post_schema (default) / all / post_schema / get_unit_data / get_dataset_metadata / get_schema_metadata / get_schema / get_schema_v2 / get_survey_list |
+| Locust_Dataset_Entries | Custom parameter to specify number of unit data in generated dataset | 1000 (default) / User defined                                                                                                                                 |
+
+```bash
+LOCUST_HEADLESS=true
+LOCUST_LOCUSTFILE=locustfile.py
+LOCUST_USERS=30
+LOCUST_SPAWN_RATE=10
+LOCUST_RUN_TIME=1m
+LOCUST_CSV=locust_tasks_result/
+LOCUST_TEST_ENDPOINTS=exclude_post_schema
+LOCUST_DATASET_ENTRIES=1000
+```
+
+#### Deploy Cloud Run Job and execute
+
+The `--execute-now` flag can be omitted if the job is not required to be executed immediately after deploy. Always omit the flag for first time deployment
+
+```bash
+gcloud run jobs deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=$LOCUST_HEADLESS,LOCUST_LOCUSTFILE=$LOCUST_LOCUSTFILE,LOCUST_USERS=$LOCUST_USERS,LOCUST_SPAWN_RATE=$LOCUST_SPAWN_RATE,LOCUST_RUN_TIME=$LOCUST_RUN_TIME,LOCUST_CSV=$LOCUST_CSV,LOCUST_TEST_ENDPOINTS=$LOCUST_TEST_ENDPOINTS,LOCUST_DATASET_ENTRIES=$LOCUST_DATASET_ENTRIES --region=europe-west2 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --max-retries=0 --execute-now
+```
+
+#### Mount a bucket to Locust Job
+
+To facilitate the export of Locust test metrics, a bucket has to be mounted to the job with a path that align with the `Locust_CSV` configuration value
+
+First, create the bucket to store the export files with the name format `{PROJECT_ID}-locust-tasks-result`
+
+Then, hook the bucket with the cloud run job:
+
+```bash
+gcloud beta run jobs update locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=$PROJECT_ID-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
+```
