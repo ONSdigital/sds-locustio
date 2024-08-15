@@ -25,13 +25,14 @@ steps:
       - |
         make lint
 
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "Build container"
+  - name: docker
+    id: "docker build and push"
     entrypoint: sh
     args:
       - "-c"
       - |
-        gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest performance_tests/
+        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" performance_tests/
+        docker push "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest"
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     id: "Deploy locust"
