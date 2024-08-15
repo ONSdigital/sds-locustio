@@ -1,12 +1,12 @@
+import datetime
 import logging
 import os
 import subprocess
-import datetime
 
 import google.oauth2.id_token
 from config import config
 from json_generator import JsonGenerator
-from locust import HttpUser, events, task, between
+from locust import HttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
@@ -30,6 +30,7 @@ def set_header():
         auth_req, audience=config.OAUTH_CLIENT_ID
     )
     return {"Authorization": f"Bearer {auth_token}"}
+
 
 HEADER = ""
 
@@ -55,7 +56,17 @@ def _(parser):
         "--test-endpoints",
         type=str,
         env_var="LOCUST_TEST_ENDPOINTS",
-        choices=["all", "exclude_post_schema", "post_schema", "get_unit_data", "get_dataset_metadata", "get_schema_metadata", "get_schema", "get_schema_v2", "get_survey_list"],
+        choices=[
+            "all",
+            "exclude_post_schema",
+            "post_schema",
+            "get_unit_data",
+            "get_dataset_metadata",
+            "get_schema_metadata",
+            "get_schema",
+            "get_schema_v2",
+            "get_survey_list",
+        ],
         default="exclude_post_schema",
         help="Choose endpoints to test",
     )
@@ -82,7 +93,7 @@ def on_test_start(environment, **kwargs):
     # Publish 1 schema for endpoint testing
     global SCHEMA_GUID
     schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-    SCHEMA_GUID = locust_helper.create_schema_record_before_test(HEADER,schema_payload)
+    SCHEMA_GUID = locust_helper.create_schema_record_before_test(HEADER, schema_payload)
 
     # Publish 1 dataset for endpoint testing
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)

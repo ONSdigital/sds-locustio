@@ -10,9 +10,7 @@ from google.cloud import exceptions, storage
 
 
 class LocustHelper:
-    def __init__(
-        self, base_url: str, database_name: str, locust_test_id: str
-    ):
+    def __init__(self, base_url: str, database_name: str, locust_test_id: str):
         self.base_url = base_url
         self.database_name = database_name
         self.locust_test_id = locust_test_id
