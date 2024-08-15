@@ -31,7 +31,7 @@ steps:
     args:
       - "-c"
       - |
-        gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks:latest performance_tests/
+        gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest performance_tests/
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     id: "Deploy locust"
