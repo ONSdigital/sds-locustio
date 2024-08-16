@@ -13,13 +13,14 @@ class JsonGenerator:
         self.survey_id = survey_id
         self.file_name = file_name
         self.fixed_identifiers = fixed_identifiers
-        self.write_unit_data_from_file = False
-        self.write_unit_data_file = "unit_data.txt"
 
     def generate_dataset_file(self, dataset_entries: int) -> None:
         """
         Generate the dataset file.
         """
+        if dataset_entries < 10 or dataset_entries > 90000:
+            raise ValueError("dataset_entries must be between 10 and 90000")
+        
         try:
             if not Path(self.file_name).is_file():
                 json_data = self._generate_json_data(
@@ -38,13 +39,13 @@ class JsonGenerator:
             print(f"Error generating dataset file: {e}")
 
     def _generate_json_data(
-        self, entries_count: int, survey_id: str, fixed_identifiers: list[str]
+        self, dataset_entries: int, survey_id: str, fixed_identifiers: list[str]
     ) -> dict[str, any]:
         """
         Generate the JSON data for the dataset file.
 
         Args:
-            entries_count (int): the number of unit data entries to generate
+            dataset_entries (int): the number of unit data entries to generate
             survey_id (str): the survey id (locust test id)
             fixed_identifiers (list[str]): the list of fixed identifiers
 
@@ -53,7 +54,7 @@ class JsonGenerator:
         """
         data = {
             "survey_id": survey_id,
-            "period_id": "test_period_id",
+            "period_id": survey_id,
             "form_types": ["0001"],
             "schema_version": "v1.0.0",
             "data": [],
@@ -61,18 +62,12 @@ class JsonGenerator:
 
         unique_ids = set()
         working_fixed_identifiers = fixed_identifiers.copy()
-
-        for _ in range(entries_count):
+        for _ in range(dataset_entries):
             working_fixed_identifiers, identifier = self._generate_unique_identifier(
                 unique_ids, working_fixed_identifiers
             )
             unique_ids.add(identifier)
-
-            if self.write_unit_data_from_file:
-                unit_data = self._generate_unit_data_from_file(identifier)
-            else:
-                unit_data = self._generate_unit_data(entries_count)
-
+            unit_data = self._generate_unit_data(dataset_entries)
             data["data"].append({"identifier": identifier, "unit_data": unit_data})
 
         return data
@@ -94,52 +89,14 @@ class JsonGenerator:
             identifier = (
                 working_fixed_identifiers.pop()
                 if working_fixed_identifiers
-                # else str(random.randint(10000, 999999))
-                else str(random.randint(1000000000, 9999999999))
+                else str(random.randint(10000, 99999))
             )
             if identifier not in existing_ids:
                 return working_fixed_identifiers, identifier
 
-    def _generate_unit_data_from_file(self, identifier: str) -> str | dict:
-        """
-        Get the unit data content for the dataset file.
-        """
-        return_unit_data = None
-
-        if self.write_unit_data_file.endswith(".json"):
-            unit_data = self._get_unit_data_from_json(self.write_unit_data_file)
-            return_unit_data = unit_data.copy()
-            return_unit_data["identifier"] = identifier
-        else:
-            return_unit_data = self._get_unit_data_from_str(self.write_unit_data_file)
-
-        return return_unit_data
-
-    def _generate_unit_data(self, dataset_entries) -> str:
+    def _generate_unit_data(self, dataset_entries: int) -> str:
         """
         Generate the unit data content for the dataset file.
         """
         # Customize this function to generate whatever unit data you need
         return "Example data " + str(random.randint(1, dataset_entries))
-
-    def _get_unit_data_from_str(self, filename: str) -> str:
-        """
-        Generate the unit data content for the dataset file from a file.
-        """
-        # Customize this function to generate unit data from a file
-        with open(filename, "r") as file:
-            txt = file.read()
-            file.close()
-
-        return txt
-
-    def _get_unit_data_from_json(self, filename: str) -> dict:
-        """
-        Generate the unit data content for the dataset file from a file.
-        """
-        # Customize this function to generate unit data from a file
-        with open(filename, "r") as file:
-            txt = file.read()
-            file.close()
-
-        return json.loads(txt)
