@@ -71,7 +71,7 @@ class JsonGenerator:
             if self.write_unit_data_from_file:
                 unit_data = self._generate_unit_data_from_file(identifier)
             else:
-                unit_data = self._generate_unit_data()
+                unit_data = self._generate_unit_data(entries_count)
 
             data["data"].append({"identifier": identifier, "unit_data": unit_data})
 
@@ -115,7 +115,7 @@ class JsonGenerator:
 
         return return_unit_data
 
-    def _generate_unit_data(self, dataset_entries: int) -> str:
+    def _generate_unit_data(self, dataset_entries) -> str:
         """
         Generate the unit data content for the dataset file.
         """
