@@ -72,7 +72,7 @@ class JsonGenerator:
                 unit_data = self._generate_unit_data_from_file(identifier)
             else:
                 unit_data = self._generate_unit_data()
-                                                          
+
             data["data"].append({"identifier": identifier, "unit_data": unit_data})
 
         return data
@@ -94,13 +94,13 @@ class JsonGenerator:
             identifier = (
                 working_fixed_identifiers.pop()
                 if working_fixed_identifiers
-                #else str(random.randint(10000, 999999))
+                # else str(random.randint(10000, 999999))
                 else str(random.randint(1000000000, 9999999999))
             )
             if identifier not in existing_ids:
                 return working_fixed_identifiers, identifier
-            
-    def _generate_unit_data_from_file(self, identifier: str) -> str|dict:
+
+    def _generate_unit_data_from_file(self, identifier: str) -> str | dict:
         """
         Get the unit data content for the dataset file.
         """
@@ -121,7 +121,7 @@ class JsonGenerator:
         """
         # Customize this function to generate whatever unit data you need
         return "Example data " + str(random.randint(1, dataset_entries))
-    
+
     def _get_unit_data_from_str(self, filename: str) -> str:
         """
         Generate the unit data content for the dataset file from a file.
@@ -132,7 +132,7 @@ class JsonGenerator:
             file.close()
 
         return txt
-    
+
     def _get_unit_data_from_json(self, filename: str) -> dict:
         """
         Generate the unit data content for the dataset file from a file.
