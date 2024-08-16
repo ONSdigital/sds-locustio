@@ -41,7 +41,7 @@ steps:
       - "-c"
       - |
         gcloud run jobs deploy locust-tasks \
-        --image europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks:latest \
+        --image europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest \
         --region europe-west2 \
         --set-env-vars=PROJECT_ID=${PROJECT_ID},BASE_URL=${_BASE_URL},OAUTH_CLIENT_ID=${_OAUTH_CLIENT_ID},LOCUST_HEADLESS=${_LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${_LOCUST_LOCUSTFILE},LOCUST_USERS=${_LOCUST_USERS},LOCUST_SPAWN_RATE=${_LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${_LOCUST_RUN_TIME},LOCUST_CSV=${_LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${_LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${_LOCUST_DATASET_ENTRIES} \
         --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com \
