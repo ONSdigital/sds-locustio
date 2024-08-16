@@ -20,7 +20,7 @@ class JsonGenerator:
         """
         if dataset_entries < 10 or dataset_entries > 90000:
             raise ValueError("dataset_entries must be between 10 and 90000")
-        
+
         try:
             if not Path(self.file_name).is_file():
                 json_data = self._generate_json_data(
