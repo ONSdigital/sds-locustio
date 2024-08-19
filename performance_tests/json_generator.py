@@ -17,6 +17,8 @@ class JsonGenerator:
         self.fixed_identifiers = fixed_identifiers
         self.write_unit_data_from_file = write_unit_data_from_file
         self.write_unit_data_filename = write_unit_data_filename
+        self.unit_data_from_str = None
+        self.unit_data_from_json = None
 
     def generate_dataset_file(self, dataset_entries: int) -> None:
         """
@@ -130,9 +132,14 @@ class JsonGenerator:
         Generate the unit data content for the dataset file from a file.
         """
         # Customize this function to generate unit data from a file
+        if self.unit_data_from_str is not None:
+            return self.unit_data_from_str
+
         with open(filename, "r") as file:
             txt = file.read()
             file.close()
+
+        self.unit_data_from_str = txt
 
         return txt
 
@@ -141,8 +148,13 @@ class JsonGenerator:
         Generate the unit data content for the dataset file from a file.
         """
         # Customize this function to generate unit data from a file
+        if self.unit_data_from_json is not None:
+            return self.unit_data_from_json
+
         with open(filename, "r") as file:
             txt = file.read()
             file.close()
+
+        self.unit_data_from_json = json.loads(txt)
 
         return json.loads(txt)
