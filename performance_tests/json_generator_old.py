@@ -99,4 +99,14 @@ class JsonGenerator:
         Generate the unit data content for the dataset file.
         """
         # Customize this function to generate whatever unit data you need
-        return "Example data " + str(random.randint(1, dataset_entries))
+        # return "Example data " + str(random.randint(1, dataset_entries))
+        if self.unit_data_from_str is not None:
+            return self.unit_data_from_str
+
+        with open("unit_data.txt", "r") as file:
+            txt = file.read()
+            file.close()
+
+        self.unit_data_from_str = txt
+
+        return txt
