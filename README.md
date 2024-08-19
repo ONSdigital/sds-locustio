@@ -83,7 +83,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locu
 ### Deploy the container to cloud run
 
 ```bash
-gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=1 --max-instances=100
+gcloud run deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=1 --max-instances=100 --cpu=8 --memory=32Gi
 ```
 
 ### Add permission
@@ -157,7 +157,7 @@ LOCUST_DATASET_ENTRIES=1000
 The `--execute-now` flag can be omitted if the job is not required to be executed immediately after deploy. Always omit the flag for first time deployment
 
 ```bash
-gcloud run jobs deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=$LOCUST_HEADLESS,LOCUST_LOCUSTFILE=$LOCUST_LOCUSTFILE,LOCUST_USERS=$LOCUST_USERS,LOCUST_SPAWN_RATE=$LOCUST_SPAWN_RATE,LOCUST_RUN_TIME=$LOCUST_RUN_TIME,LOCUST_CSV=$LOCUST_CSV,LOCUST_TEST_ENDPOINTS=$LOCUST_TEST_ENDPOINTS,LOCUST_DATASET_ENTRIES=$LOCUST_DATASET_ENTRIES --region=europe-west2 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --max-retries=0 --execute-now
+gcloud run jobs deploy locust-tasks --image=gcr.io/$PROJECT_ID/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=$LOCUST_HEADLESS,LOCUST_LOCUSTFILE=$LOCUST_LOCUSTFILE,LOCUST_USERS=$LOCUST_USERS,LOCUST_SPAWN_RATE=$LOCUST_SPAWN_RATE,LOCUST_RUN_TIME=$LOCUST_RUN_TIME,LOCUST_CSV=$LOCUST_CSV,LOCUST_TEST_ENDPOINTS=$LOCUST_TEST_ENDPOINTS,LOCUST_DATASET_ENTRIES=$LOCUST_DATASET_ENTRIES --region=europe-west2 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --execute-now
 ```
 
 #### Mount a bucket to Locust Job

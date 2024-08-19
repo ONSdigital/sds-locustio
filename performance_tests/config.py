@@ -12,6 +12,8 @@ class Config:
     )
     DATABASE = get_value_from_env("DATABASE", "sds")
     FIXED_IDENTIFIERS = ["43532", "65871"]
+    WRITE_UNIT_DATA_FROM_FILE = True
+    WRITE_UNIT_DATA_FILENAME = "unit_data.txt"
 
 
 config = Config()
