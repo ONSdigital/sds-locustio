@@ -13,6 +13,7 @@ class JsonGenerator:
         self.survey_id = survey_id
         self.file_name = file_name
         self.fixed_identifiers = fixed_identifiers
+        self.unit_data_from_str = None
 
     def generate_dataset_file(self, dataset_entries: int) -> None:
         """
