@@ -45,7 +45,7 @@ json_generator = JsonGenerator(
     config.TEST_DATASET_FILE,
     config.FIXED_IDENTIFIERS,
     config.WRITE_UNIT_DATA_FROM_FILE,
-    config.WRITE_UNIT_DATA_FILENAME
+    config.WRITE_UNIT_DATA_FILENAME,
 )
 
 SCHEMA_GUID = "UNASSIGNED"

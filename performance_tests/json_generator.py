@@ -112,7 +112,9 @@ class JsonGenerator:
             return_unit_data = unit_data.copy()
             return_unit_data["identifier"] = identifier
         else:
-            return_unit_data = self._get_unit_data_from_str(self.write_unit_data_filename)
+            return_unit_data = self._get_unit_data_from_str(
+                self.write_unit_data_filename
+            )
 
         return return_unit_data
 
