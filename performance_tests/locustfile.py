@@ -5,7 +5,7 @@ import subprocess
 
 import google.oauth2.id_token
 from config import config
-from json_generator import JsonGenerator
+from json_generator_old import JsonGenerator
 from locust import HttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
@@ -40,12 +40,18 @@ SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 DATASET_ID = ""
 
 locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, locust_test_id)
-json_generator = JsonGenerator(
+"""json_generator = JsonGenerator(
     locust_test_id,
     config.TEST_DATASET_FILE,
     config.FIXED_IDENTIFIERS,
     config.WRITE_UNIT_DATA_FROM_FILE,
     config.WRITE_UNIT_DATA_FILENAME,
+)"""
+
+json_generator = JsonGenerator(
+    locust_test_id,
+    config.TEST_DATASET_FILE,
+    config.FIXED_IDENTIFIERS,
 )
 
 SCHEMA_GUID = "UNASSIGNED"
