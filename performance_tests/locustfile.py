@@ -5,10 +5,13 @@ import subprocess
 
 import google.oauth2.id_token
 from config import config
+from gevent.pool import Group
 from json_generator import JsonGenerator
 from locust import HttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
+
+NUM_OF_PARALLEL_REQUESTS = 6
 
 BASE_URL = config.BASE_URL
 
@@ -156,7 +159,7 @@ class PerformanceTests(HttpUser):
 
     # Performance tests
     # Test post schema endpoint
-    @task
+    @task(0)
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         if (
@@ -172,7 +175,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema metadata endpoint
-    @task
+    @task(0)
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
@@ -188,7 +191,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema endpoint
-    @task
+    @task(0)
     def http_get_sds_schema_v1(self):
         """Performance test task for the `http_get_sds_schema_v1` function"""
         if (
@@ -204,7 +207,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema v2 endpoint
-    @task
+    @task(0)
     def http_get_sds_schema_v2(self):
         """Performance test task for the `http_get_sds_schema_v2` function"""
         if (
@@ -220,7 +223,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test dataset metadata endpoint
-    @task
+    @task(0)
     def http_get_sds_dataset_metadata_v1(self):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
@@ -236,7 +239,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test unit data endpoint
-    @task
+    @task(1)
     def http_get_sds_unit_data_v1(self):
         """Performance test task for the `http_get_sds_unit_data_v1` function"""
         if (
@@ -244,15 +247,22 @@ class PerformanceTests(HttpUser):
             or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_unit_data"
         ):
-            self.client.get(
-                f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
-                headers=HEADER,
-            )
+            group = Group()
+
+            for i in range(0, NUM_OF_PARALLEL_REQUESTS):
+                group.spawn(
+                    lambda: self.client.get(
+                        f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
+                        headers=HEADER,
+                    )
+                )
+
+            group.join()
         else:
             pass
 
     # Test get survey list endpoint
-    @task
+    @task(0)
     def http_get_sds_survey_list_v1(self):
         """Performance test task for the `http_get_sds_survey_list_v1` function"""
         if (
