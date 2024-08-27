@@ -159,7 +159,7 @@ class PerformanceTests(HttpUser):
 
     # Performance tests
     # Test post schema endpoint
-    @task(0)
+    @task
     def http_post_sds_v1(self):
         """Performance test task for the `http_post_sds_v1` function"""
         if (
@@ -175,7 +175,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema metadata endpoint
-    @task(0)
+    @task
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
@@ -191,7 +191,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema endpoint
-    @task(0)
+    @task
     def http_get_sds_schema_v1(self):
         """Performance test task for the `http_get_sds_schema_v1` function"""
         if (
@@ -207,7 +207,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get schema v2 endpoint
-    @task(0)
+    @task
     def http_get_sds_schema_v2(self):
         """Performance test task for the `http_get_sds_schema_v2` function"""
         if (
@@ -223,7 +223,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test dataset metadata endpoint
-    @task(0)
+    @task
     def http_get_sds_dataset_metadata_v1(self):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
@@ -239,7 +239,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test unit data endpoint
-    @task(1)
+    @task
     def http_get_sds_unit_data_v1(self):
         """Performance test task for the `http_get_sds_unit_data_v1` function"""
         if (
@@ -262,7 +262,7 @@ class PerformanceTests(HttpUser):
             pass
 
     # Test get survey list endpoint
-    @task(0)
+    @task
     def http_get_sds_survey_list_v1(self):
         """Performance test task for the `http_get_sds_survey_list_v1` function"""
         if (
