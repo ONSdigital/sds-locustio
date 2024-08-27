@@ -31,7 +31,6 @@ def set_header():
     )
     return {"Authorization": f"Bearer {auth_token}"}
 
-
 HEADER = ""
 
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
