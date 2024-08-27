@@ -33,6 +33,7 @@ def set_header():
     )
     return {"Authorization": f"Bearer {auth_token}"}
 
+
 HEADER = ""
 
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
@@ -250,7 +251,7 @@ class PerformanceTests(HttpUser):
                 f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
                 headers=HEADER,
             )
-                
+
         else:
             pass
 
