@@ -140,7 +140,7 @@ def on_test_stop(**kwargs):
 
 
 class PerformanceTests(HttpUser):
-    wait_time = between(0.5, 1)
+    wait_time = between(0.05, 0.1)
     host = config.BASE_URL
 
     def __init__(self, *args, **kwargs):
