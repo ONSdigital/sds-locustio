@@ -4,11 +4,14 @@ import os
 import subprocess
 
 import google.oauth2.id_token
+from gevent.pool import Group
 from config import config
 from json_generator import JsonGenerator
 from locust import HttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
+
+NUM_OF_PARALLEL_REQUESTS = 6
 
 BASE_URL = config.BASE_URL
 
@@ -245,10 +248,15 @@ class PerformanceTests(HttpUser):
             or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_unit_data"
         ):
-            self.client.get(
-                f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
-                headers=HEADER,
-            )
+            group = Group()
+
+            for i in range(0, NUM_OF_PARALLEL_REQUESTS):
+                group.spawn(lambda:self.client.get(
+                    f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
+                    headers=HEADER,
+                ))
+
+            group.join()
         else:
             pass
 
