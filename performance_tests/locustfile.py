@@ -94,7 +94,7 @@ def on_test_start(environment, **kwargs):
     HEADER = set_header()
 
     # Generate dataset file
-    json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
+    # json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
 
     # Publish 1 schema for endpoint testing
     global SCHEMA_GUID
@@ -102,7 +102,7 @@ def on_test_start(environment, **kwargs):
     SCHEMA_GUID = locust_helper.create_schema_record_before_test(HEADER, schema_payload)
 
     # Publish 1 dataset for endpoint testing
-    locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+    # locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
 
     # Get dataset ID
     global DATASET_ID
