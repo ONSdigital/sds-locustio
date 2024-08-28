@@ -6,7 +6,7 @@ import subprocess
 import google.oauth2.id_token
 from config import config
 from json_generator import JsonGenerator
-from locust import HttpUser, between, events, task
+from locust import FastHttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
@@ -115,7 +115,7 @@ def on_test_stop(**kwargs):
     Function to run after the test stops
     """
     # Delete generated dataset file
-    locust_helper.delete_local_file(config.TEST_DATASET_FILE)
+    """locust_helper.delete_local_file(config.TEST_DATASET_FILE)
     logging.info("dataset file for publish is deleted")
 
     if config.OAUTH_CLIENT_ID != "localhost":
@@ -138,10 +138,10 @@ def on_test_stop(**kwargs):
                 "--survey_id",
                 locust_test_id,
             ]
-        )
+        )"""
 
 
-class PerformanceTests(HttpUser):
+class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
     host = config.BASE_URL
 
