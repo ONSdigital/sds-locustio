@@ -83,17 +83,6 @@ def _(parser):
     )
 
 
-@events.init.add_listener
-def on_locust_init(environment, **kwargs):
-    # Generate dataset file
-    logger.info("Generating dataset file")
-    json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
-
-    # Publish 1 dataset for endpoint testing
-    logger.info("Publishing SDS dataset for testing")
-    locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
-
-
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
     """
@@ -122,13 +111,22 @@ def on_test_start(environment, **kwargs):
 
         logger.info("Preparation for testing is complete. Test will be starting")
 
+    else:
+        # Generate dataset file
+        logger.info("Generating dataset file")
+        json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
+
+        # Publish 1 dataset for endpoint testing
+        logger.info("Publishing SDS dataset for testing")
+        locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+
 
 @events.test_stop.add_listener
 def on_test_stop(environment, **kwargs):
     """
     Function to run after the test stops
     """
-    if not isinstance(environment.runner, MasterRunner):
+    if isinstance(environment.runner, MasterRunner):
         if config.OAUTH_CLIENT_ID == "localhost":
             # Delete generated dataset file
             locust_helper.delete_local_file(config.TEST_DATASET_FILE)

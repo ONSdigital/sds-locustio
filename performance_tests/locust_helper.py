@@ -279,8 +279,9 @@ class LocustHelper:
 
     def force_run_schedule_job(self) -> None:
         """
-        Method to force run the schedule job to trigger the new dataset upload function.
+        A script to force run the schedule job to trigger the new dataset upload function.
         """
+        # Note: This is a workaround to force run the cloud scheduler to trigger the new dataset upload function.
         subprocess.run(
             [
                 "python",
