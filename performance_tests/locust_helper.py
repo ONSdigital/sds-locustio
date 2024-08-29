@@ -87,7 +87,9 @@ class LocustHelper:
                 self.upload_file_to_bucket(
                     file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
                 )
-                self.wait_and_check_file_is_uploaded(file, f"{config.PROJECT_ID}-sds-europe-west2-dataset")
+                self.wait_and_check_file_is_uploaded(
+                    file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
+                )
                 self.force_run_schedule_job()
 
         except Exception as e:
@@ -151,7 +153,7 @@ class LocustHelper:
             )
         except exceptions:
             raise RuntimeError(f"Error uploading file {file}.")
-        
+
     def wait_and_check_file_is_uploaded(self, file: str, bucket_name: str) -> None:
         """
         Wait and check if the file is uploaded to the bucket
