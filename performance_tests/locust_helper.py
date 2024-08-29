@@ -84,6 +84,9 @@ class LocustHelper:
                 post_sds_dataset_payload = self.load_json(file)
                 self.post_dataset_to_local_endpoint(post_sds_dataset_payload)
             else:
+                self.delete_all_files_from_bucket(
+                    f"{config.PROJECT_ID}-sds-europe-west2-dataset"
+                )
                 self.upload_file_to_bucket(
                     file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
                 )
@@ -166,14 +169,20 @@ class LocustHelper:
         storage_bucket = self.get_bucket(bucket_name)
         backoff = 0.25
         attempts = 10
+        count = 0
+
         while attempts != 0:
-            blobs = storage_bucket.list_blobs(prefix=file)
+            blobs = storage_bucket.list_blobs()
             for blob in blobs:
-                if blob.name == file:
-                    return
+                count += 1
+
+            if count > 0:
+                return
+
             attempts -= 1
             time.sleep(backoff)
             backoff += backoff
+
         raise RuntimeError(f"Error uploading file {file}.")
 
     # Get dataset id from spin up dataset
@@ -268,3 +277,19 @@ class LocustHelper:
         )
 
         client.run_job(request=request)
+
+    def delete_all_files_from_bucket(self, bucket_name: str) -> None:
+        """
+        Method to delete all files from the specified bucket.
+
+        Parameters:
+            bucket_name: the name of the bucket to clean
+
+        Returns:
+            None
+        """
+        storage_bucket = self.get_bucket(bucket_name)
+        blobs = storage_bucket.list_blobs()
+
+        for blob in blobs:
+            blob.delete()
