@@ -10,7 +10,7 @@ from locust import FastHttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
-NUM_OF_PARALLEL_REQUESTS = 6
+logger = logging.getLogger(__name__)
 
 BASE_URL = config.BASE_URL
 
@@ -87,26 +87,33 @@ def on_test_start(environment, **kwargs):
     """
     Function to run before the test starts
     """
+    logger.info("Setting header for requests")
     global HEADER
     HEADER = set_header()
 
-    # Generate dataset file
-    json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
-
     # Publish 1 schema for endpoint testing
+    logger.info("Publishing SDS schema for testing")
     global SCHEMA_GUID
     schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
     SCHEMA_GUID = locust_helper.create_schema_record_before_test(HEADER, schema_payload)
 
+    # Generate dataset file
+    logger.info("Generating dataset file")
+    json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
+
     # Publish 1 dataset for endpoint testing
+    logger.info("Publishing SDS dataset for testing")
     locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
 
     # Get dataset ID
+    logger.info("Retrieving dataset ID")
     global DATASET_ID
     if config.OAUTH_CLIENT_ID == "localhost":
         DATASET_ID = locust_helper.get_dataset_id_from_local()
     else:
         DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)
+
+    logger.info("Preparation for testing is complete. Test will be starting")
 
 
 @events.test_stop.add_listener
@@ -114,11 +121,11 @@ def on_test_stop(**kwargs):
     """
     Function to run after the test stops
     """
-    # Delete generated dataset file
-    locust_helper.delete_local_file(config.TEST_DATASET_FILE)
-    logging.info("dataset file for publish is deleted")
-
-    if config.OAUTH_CLIENT_ID != "localhost":
+    if config.OAUTH_CLIENT_ID == "localhost":
+        # Delete generated dataset file
+        locust_helper.delete_local_file(config.TEST_DATASET_FILE)
+        logging.info("dataset file for publish is deleted")
+    else:
         # Delete locust test schema files from SDS bucket
         locust_helper.delete_docs(locust_test_id, SCHEMA_BUCKET)
         logging.info("schema files deleted")
