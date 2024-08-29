@@ -7,9 +7,9 @@ import google.oauth2.id_token
 from config import config
 from json_generator import JsonGenerator
 from locust import FastHttpUser, between, events, task
+from locust.runners import MasterRunner
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
-from locust.runners import MasterRunner
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,9 @@ def on_test_start(environment, **kwargs):
         logger.info("Publishing SDS schema for testing")
         global SCHEMA_GUID
         schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-        SCHEMA_GUID = locust_helper.create_schema_record_before_test(HEADER, schema_payload)
+        SCHEMA_GUID = locust_helper.create_schema_record_before_test(
+            HEADER, schema_payload
+        )
 
         # Get dataset ID
         logger.info("Retrieving dataset ID")
