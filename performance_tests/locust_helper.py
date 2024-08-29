@@ -8,6 +8,8 @@ import requests
 from config import config
 from google.cloud import exceptions, scheduler_v1, storage
 
+logger = logging.getLogger(__name__)
+
 
 class LocustHelper:
     def __init__(self, base_url: str, database_name: str, locust_test_id: str):
@@ -166,17 +168,21 @@ class LocustHelper:
             bucket_name (str): the name of the bucket
 
         """
+        logger.debug("Waiting for file to be uploaded to bucket...")
+
         storage_bucket = self.get_bucket(bucket_name)
-        backoff = 0.25
-        attempts = 10
+        backoff = 0.5
+        attempts = 5
         count = 0
 
         while attempts != 0:
             blobs = storage_bucket.list_blobs()
             for blob in blobs:
+                logger.debug(f"Dataset File: {blob.name}")
                 count += 1
 
             if count > 0:
+                logger.debug("File found...")
                 return
 
             attempts -= 1
