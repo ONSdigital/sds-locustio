@@ -1,12 +1,13 @@
 import json
 import logging
 import os
+import subprocess
 import time
 from pathlib import Path
 
 import requests
 from config import config
-from google.cloud import exceptions, scheduler_v1, storage
+from google.cloud import exceptions, storage
 
 logger = logging.getLogger(__name__)
 
@@ -280,13 +281,14 @@ class LocustHelper:
         """
         Method to force run the schedule job to trigger the new dataset upload function.
         """
-        client = scheduler_v1.CloudSchedulerClient()
-
-        request = scheduler_v1.RunJobRequest(
-            name=f"projects/{config.PROJECT_ID}/locations/europe-west2/jobs/trigger-new-dataset"
+        subprocess.run(
+            [
+                "python",
+                "run_schedule_job.py",
+                "--project_id",
+                config.PROJECT_ID,
+            ]
         )
-
-        client.run_job(request=request)
 
     def delete_all_files_from_bucket(self, bucket_name: str) -> None:
         """
