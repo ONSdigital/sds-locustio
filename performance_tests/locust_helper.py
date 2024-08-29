@@ -86,15 +86,19 @@ class LocustHelper:
                 post_sds_dataset_payload = self.load_json(file)
                 self.post_dataset_to_local_endpoint(post_sds_dataset_payload)
             else:
+                logger.info("Cleaning up dataset bucket...")
                 self.delete_all_files_from_bucket(
                     f"{config.PROJECT_ID}-sds-europe-west2-dataset"
                 )
+                logger.info("Uploading file to bucket...")
                 self.upload_file_to_bucket(
                     file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
                 )
+                logger.info("Wait and check if file is uploaded...")
                 self.wait_and_check_file_is_uploaded(
                     file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
                 )
+                logger.info("Force running schedule job to publish dataset...")
                 self.force_run_schedule_job()
 
         except Exception as e:
