@@ -6,7 +6,7 @@ from pathlib import Path
 
 import requests
 from config import config
-from google.cloud import scheduler_v1, exceptions, storage
+from google.cloud import exceptions, scheduler_v1, storage
 
 
 class LocustHelper:
@@ -231,7 +231,7 @@ class LocustHelper:
         """
         with open(filepath) as f:
             return json.load(f)
-        
+
     def force_run_schedule_job(self) -> None:
         """
         Method to force run the schedule job to trigger the new dataset upload function.

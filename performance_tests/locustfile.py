@@ -1,7 +1,7 @@
 import datetime
-
 import logging
 import os
+import subprocess
 
 import google.oauth2.id_token
 from config import config
@@ -9,9 +9,6 @@ from json_generator import JsonGenerator
 from locust import FastHttpUser, between, events, task
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
-
-import subprocess
-
 
 NUM_OF_PARALLEL_REQUESTS = 6
 
@@ -109,7 +106,7 @@ def on_test_start(environment, **kwargs):
     if config.OAUTH_CLIENT_ID == "localhost":
         DATASET_ID = locust_helper.get_dataset_id_from_local()
     else:
-        DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)       
+        DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)
 
 
 @events.test_stop.add_listener
