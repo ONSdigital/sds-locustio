@@ -78,6 +78,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locu
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iap.httpsResourceAccessor"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/run.developer"
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/cloudscheduler.admin"
 ```
 
 ### Deploy the container to cloud run
@@ -130,16 +131,16 @@ Headless mode allow Locust to be run without the WebUI
 #### Set up the environment variables
 
 
-| Var Name               | Description                                                          | Value                                                                                                                                                         |
-| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Locust_Headless        | A flag to enable headless mode                                       | true                                                                                                                                                          |
-| Locust_Locustfile      | Location of the locust file                                          | locustfile.py                                                                                                                                                 |
-| Locust_Users           | Number of concurrent users                                           | User defined                                                                                                                                                  |
-| Locust_Spawn_Rate      | Rate to spawn users                                                  | User defined                                                                                                                                                  |
-| Locust_Run_Time        | Stop after the specified amount of time                              | User defined                                                                                                                                                  |
-| Locust_CSV             | CSV filename that store request stats                                | locust_tasks_result                                                                                                                                           |
-| Locust_Test_Endpoints  | Custom parameter to select test endpoints                            | exclude_post_schema (default) / all / post_schema / get_unit_data / get_dataset_metadata / get_schema_metadata / get_schema / get_schema_v2 / get_survey_list |
-| Locust_Dataset_Entries | Custom parameter to specify number of unit data in generated dataset | 1000 (default) / User defined                                                                                                                                 |
+| Var Name               | Description                                                          | Value                                                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Locust_Headless        | A flag to enable headless mode                                       | true                                                                                                                                   |
+| Locust_Locustfile      | Location of the locust file                                          | locustfile.py                                                                                                                          |
+| Locust_Users           | Number of concurrent users                                           | User defined                                                                                                                           |
+| Locust_Spawn_Rate      | Rate to spawn users                                                  | User defined                                                                                                                           |
+| Locust_Run_Time        | Stop after the specified amount of time                              | User defined                                                                                                                           |
+| Locust_CSV             | CSV filename that store request stats                                | locust_tasks_result                                                                                                                    |
+| Locust_Test_Endpoints  | Custom parameter to select test endpoints                            | all / post_schema / get_unit_data (default)/ get_dataset_metadata / get_schema_metadata / get_schema / get_schema_v2 / get_survey_list |
+| Locust_Dataset_Entries | Custom parameter to specify number of unit data in generated dataset | 1000 (default) / User defined                                                                                                          |
 
 ```bash
 LOCUST_HEADLESS=true
@@ -148,7 +149,7 @@ LOCUST_USERS=30
 LOCUST_SPAWN_RATE=10
 LOCUST_RUN_TIME=1m
 LOCUST_CSV=locust_tasks_result/
-LOCUST_TEST_ENDPOINTS=exclude_post_schema
+LOCUST_TEST_ENDPOINTS=get_unit_data
 LOCUST_DATASET_ENTRIES=1000
 ```
 

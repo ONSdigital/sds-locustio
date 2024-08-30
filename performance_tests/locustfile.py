@@ -45,8 +45,6 @@ def _(parser):
         env_var="LOCUST_TEST_ENDPOINTS",
         choices=[
             "all",
-            "exclude_post_schema",
-            "post_schema",
             "get_unit_data",
             "get_dataset_metadata",
             "get_schema_metadata",
@@ -54,7 +52,7 @@ def _(parser):
             "get_schema_v2",
             "get_survey_list",
         ],
-        default="exclude_post_schema",
+        default="get_unit_data",
         help="Choose endpoints to test",
     )
     parser.add_argument(
@@ -127,39 +125,6 @@ def on_test_start(environment, **kwargs):
             locust_helper.create_schema_record_before_test(HEADER, schema_payload)
 
 
-@events.test_stop.add_listener
-def on_test_stop(environment, **kwargs):
-    """
-    Function to run after the test stops
-    """
-    """if not isinstance(environment.runner, MasterRunner):
-        if config.OAUTH_CLIENT_ID == "localhost":
-            # Delete generated dataset file
-            locust_helper.delete_local_file(config.TEST_DATASET_FILE)
-            logging.info("dataset file for publish is deleted")
-        else:
-            # Delete locust test schema files from SDS bucket
-            locust_helper.delete_docs(locust_test_id, SCHEMA_BUCKET)
-            logging.info("schema files deleted")
-
-            # Delete locust test schema and dataset data from FireStore
-            # Note: This is a workaround to delete data from FireStore.
-            # Running the script in subprocess will avoid FireStore Client connection problem in Locust Test.
-            logging.info("begin deleting firestore locust test data")
-            subprocess.run(
-                [
-                    "python",
-                    "delete_firestore_locust_test_data.py",
-                    "--project_id",
-                    config.PROJECT_ID,
-                    "--database_name",
-                    DATABASE_NAME,
-                    "--survey_id",
-                    locust_test_id,
-                ]
-            )"""
-
-
 class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
     host = config.BASE_URL
@@ -168,8 +133,6 @@ class PerformanceTests(FastHttpUser):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
 
-        self.post_sds_schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-
     def on_start(self):
         super().on_start()
 
@@ -177,21 +140,6 @@ class PerformanceTests(FastHttpUser):
         super().on_stop()
 
     # Performance tests
-    # Test post schema endpoint
-    @task
-    def http_post_sds_v1(self):
-        """Performance test task for the `http_post_sds_v1` function"""
-        if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "post_schema"
-        ):
-            self.client.post(
-                f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
-                json=self.post_sds_schema_payload,
-                headers=HEADER,
-            )
-        else:
-            pass
 
     # Test get schema metadata endpoint
     @task
@@ -199,7 +147,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_schema_metadata"
         ):
             self.client.get(
@@ -215,7 +162,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_schema_v1` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_schema"
         ):
             self.client.get(
@@ -231,7 +177,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_schema_v2` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_schema_v2"
         ):
             self.client.get(
@@ -247,7 +192,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_dataset_metadata"
         ):
             self.client.get(
@@ -263,7 +207,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_unit_data_v1` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_unit_data"
         ):
             self.client.get(
@@ -280,7 +223,6 @@ class PerformanceTests(FastHttpUser):
         """Performance test task for the `http_get_sds_survey_list_v1` function"""
         if (
             self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "exclude_post_schema"
             or self.environment.parsed_options.test_endpoints == "get_survey_list"
         ):
             self.client.get(f"{BASE_URL}/v1/survey_list", headers=HEADER)
