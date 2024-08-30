@@ -126,7 +126,7 @@ def on_test_stop(environment, **kwargs):
     """
     Function to run after the test stops
     """
-    if isinstance(environment.runner, MasterRunner):
+    if not isinstance(environment.runner, MasterRunner):
         if config.OAUTH_CLIENT_ID == "localhost":
             # Delete generated dataset file
             locust_helper.delete_local_file(config.TEST_DATASET_FILE)
