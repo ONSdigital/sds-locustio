@@ -5,6 +5,7 @@ import subprocess
 import time
 from pathlib import Path
 
+import google.oauth2.id_token
 import requests
 from config import config
 from google.cloud import exceptions, storage
@@ -17,6 +18,15 @@ class LocustHelper:
         self.base_url = base_url
         self.database_name = database_name
         self.locust_test_id = locust_test_id
+
+    # Token expiry time is 1 hour and that will be the max time for the test at the moment
+    def set_header(self) -> dict:
+        """Set header for SDS requests"""
+        auth_req = google.auth.transport.requests.Request()
+        auth_token = google.oauth2.id_token.fetch_id_token(
+            auth_req, audience=config.OAUTH_CLIENT_ID
+        )
+        return {"Authorization": f"Bearer {auth_token}"}
 
     # Delete all documents in a bucket folder
     def delete_docs(self, survey_id: str, bucket_name: str) -> None:
@@ -229,10 +239,7 @@ class LocustHelper:
             str: the dataset id
         """
         while attempts != 0:
-            response = requests.get(
-                f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}",
-                headers=headers,
-            )
+            response = self.get_dataset_metadata(headers)
 
             if response.status_code == 200:
                 for dataset_metadata in response.json():
@@ -306,3 +313,67 @@ class LocustHelper:
 
         for blob in blobs:
             blob.delete()
+
+    # Wait and get schema guid from SDS
+    def wait_and_get_schema_guid(
+        self,
+        headers: str,
+        attempts: int = 10,
+        backoff: int = 0.25,
+    ) -> str:
+        """
+        Wait and get schema guid from SDS
+
+        Args:
+            attempts (int): the number of attempts to make
+            backoff (int): the backoff time
+
+        Returns:
+            str: the schema guid
+        """
+        while attempts != 0:
+            response = self.get_schema_metadata(headers)
+
+            if response.status_code == 200:
+                for schema_metadata in response.json():
+                    return schema_metadata["guid"]
+
+            attempts -= 1
+            time.sleep(backoff)
+            backoff += backoff
+
+        raise RuntimeError("Error getting schema guid")
+
+    def get_schema_metadata(
+        self,
+        headers: str,
+    ) -> requests.Response:
+        """
+        Get schema metadata from db
+
+        Returns:
+            response: the response from the API
+        """
+        response = requests.get(
+            f"{self.base_url}/v1/schema_metadata?survey_id={self.locust_test_id}",
+            headers=headers,
+        )
+
+        return response
+
+    def get_dataset_metadata(
+        self,
+        headers: str,
+    ) -> requests.Response:
+        """
+        Get dataset metadata from db
+
+        Returns:
+            response: the response from the API
+        """
+        response = requests.get(
+            f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}",
+            headers=headers,
+        )
+
+        return response
