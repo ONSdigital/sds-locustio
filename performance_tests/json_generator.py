@@ -13,6 +13,7 @@ class JsonGenerator:
         self.survey_id = survey_id
         self.file_name = file_name
         self.fixed_identifiers = fixed_identifiers
+        self.unit_data_from_str = None
 
     def generate_dataset_file(self, dataset_entries: int) -> None:
         """
@@ -20,7 +21,7 @@ class JsonGenerator:
         """
         if dataset_entries < 10 or dataset_entries > 90000:
             raise ValueError("dataset_entries must be between 10 and 90000")
-        
+
         try:
             if not Path(self.file_name).is_file():
                 json_data = self._generate_json_data(
@@ -99,4 +100,14 @@ class JsonGenerator:
         Generate the unit data content for the dataset file.
         """
         # Customize this function to generate whatever unit data you need
-        return "Example data " + str(random.randint(1, dataset_entries))
+        # return "Example data " + str(random.randint(1, dataset_entries))
+        if self.unit_data_from_str is not None:
+            return self.unit_data_from_str
+
+        with open("unit_data.txt", "r") as file:
+            txt = file.read()
+            file.close()
+
+        self.unit_data_from_str = txt
+
+        return txt

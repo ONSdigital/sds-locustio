@@ -1,0 +1,45 @@
+steps:
+  - name: python:3.11
+    id: "Upgrade pip"
+    entrypoint: "python"
+    args: ["-m", "pip", "install", "--upgrade", "pip", "--user"]
+
+  - name: python:3.11
+    id: "Install app requirements"
+    entrypoint: python
+    args: ["-m", "pip", "install", "-r", "performance_tests/requirements.txt", "--user"]
+
+  - name: python:3.11
+    id: "Check linting and code formatting"
+    entrypoint: sh
+    args:
+      - "-c"
+      - |
+        make lint
+
+  - name: docker
+    id: "docker build and push"
+    entrypoint: sh
+    args:
+      - "-c"
+      - |
+        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" performance_tests/
+        docker push "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest"
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "Deploy locust"
+    entrypoint: sh
+    args:
+      - "-c"
+      - |
+        gcloud run jobs deploy locust-tasks \
+        --image europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest \
+        --region europe-west2 \
+        --cpu=${_CPU} \
+        --memory=${_MEMORY} \
+        --set-env-vars=PROJECT_ID=${PROJECT_ID},BASE_URL=${_BASE_URL},OAUTH_CLIENT_ID=${_OAUTH_CLIENT_ID},LOCUST_HEADLESS=${_LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${_LOCUST_LOCUSTFILE},LOCUST_USERS=${_LOCUST_USERS},LOCUST_SPAWN_RATE=${_LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${_LOCUST_RUN_TIME},LOCUST_CSV=${_LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${_LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${_LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${_LOCUST_PROCESSES} \
+        --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com \
+        --max-retries=0
+
+options:
+  logging: CLOUD_LOGGING_ONLY
