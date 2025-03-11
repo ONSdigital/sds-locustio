@@ -63,6 +63,7 @@ def _(parser):
         help="Number of unit data in the generated dataset between 10 to 90000",
     )
 
+
 def run_master_test_start_process(environment):
     global HEADER
 
@@ -80,9 +81,7 @@ def run_master_test_start_process(environment):
             config.FIXED_IDENTIFIERS,
         )
 
-        json_generator.generate_dataset_file(
-            environment.parsed_options.dataset_entries
-        )
+        json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
 
         # Publish 1 dataset for endpoint testing
         logger.info("Publishing SDS dataset for testing...")
@@ -95,6 +94,7 @@ def run_master_test_start_process(environment):
         logger.info("Publishing SDS schema for testing...")
         schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
         locust_helper.create_schema_record_before_test(HEADER, schema_payload)
+
 
 def run_worker_test_start_process():
     global HEADER
