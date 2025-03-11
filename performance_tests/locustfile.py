@@ -63,6 +63,59 @@ def _(parser):
         help="Number of unit data in the generated dataset between 10 to 90000",
     )
 
+def run_master_test_start_process(environment):
+    global HEADER
+
+    HEADER = locust_helper.set_header()
+
+    # Generate dataset file
+    response = locust_helper.get_dataset_metadata(HEADER)
+
+    if response.status_code == 404:
+        logger.info("Generating dataset file...")
+
+        json_generator = JsonGenerator(
+            locust_test_id,
+            config.TEST_DATASET_FILE,
+            config.FIXED_IDENTIFIERS,
+        )
+
+        json_generator.generate_dataset_file(
+            environment.parsed_options.dataset_entries
+        )
+
+        # Publish 1 dataset for endpoint testing
+        logger.info("Publishing SDS dataset for testing...")
+        locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
+
+    # Publish 1 schema for endpoint testing
+    response = locust_helper.get_schema_metadata(HEADER)
+
+    if response.status_code == 404:
+        logger.info("Publishing SDS schema for testing...")
+        schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
+        locust_helper.create_schema_record_before_test(HEADER, schema_payload)
+
+def run_worker_test_start_process():
+    global HEADER
+    global SCHEMA_GUID
+    global DATASET_ID
+
+    # Get schema guid
+    logger.info("Retrieving schema GUID")
+    SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(HEADER)
+    logger.info(f"Test schema GUID: {SCHEMA_GUID}")
+
+    # Get dataset ID
+    logger.info("Retrieving dataset ID")
+    if config.OAUTH_CLIENT_ID == "localhost":
+        DATASET_ID = locust_helper.get_dataset_id_from_local()
+    else:
+        DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)
+    logger.info(f"Test dataset ID: {DATASET_ID}")
+
+    logger.info("Preparation for testing is complete. Test will be starting")
+
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
@@ -70,59 +123,19 @@ def on_test_start(environment, **kwargs):
     Function to run before the test starts
     """
     logger.info("Setting header for requests")
-    global HEADER
-    HEADER = locust_helper.set_header()
 
-    if not isinstance(environment.runner, MasterRunner):
-        # Worker Node operation
+    if os.environ.get("LOCUST_HEADLESS") == "true":
+        if not isinstance(environment.runner, MasterRunner):
+            # Worker Node operation
+            run_worker_test_start_process()
 
-        # Get schema guid
-        logger.info("Retrieving schema GUID")
-        global SCHEMA_GUID
-        SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(HEADER)
-        logger.info(f"Test schema GUID: {SCHEMA_GUID}")
-
-        # Get dataset ID
-        logger.info("Retrieving dataset ID")
-        global DATASET_ID
-        if config.OAUTH_CLIENT_ID == "localhost":
-            DATASET_ID = locust_helper.get_dataset_id_from_local()
         else:
-            DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)
-        logger.info(f"Test dataset ID: {DATASET_ID}")
+            # Master Node operation
+            run_master_test_start_process(environment)
 
-        logger.info("Preparation for testing is complete. Test will be starting")
-
-    else:
-        # Master Node operation
-
-        # Generate dataset file
-        response = locust_helper.get_dataset_metadata(HEADER)
-
-        if response.status_code == 404:
-            logger.info("Master: Generating dataset file...")
-
-            json_generator = JsonGenerator(
-                locust_test_id,
-                config.TEST_DATASET_FILE,
-                config.FIXED_IDENTIFIERS,
-            )
-
-            json_generator.generate_dataset_file(
-                environment.parsed_options.dataset_entries
-            )
-
-            # Publish 1 dataset for endpoint testing
-            logger.info("Master: Publishing SDS dataset for testing...")
-            locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
-
-        # Publish 1 schema for endpoint testing
-        response = locust_helper.get_schema_metadata(HEADER)
-
-        if response.status_code == 404:
-            logger.info("Master: Publishing SDS schema for testing...")
-            schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-            locust_helper.create_schema_record_before_test(HEADER, schema_payload)
+    if os.environ.get("LOCUST_HEADLESS") == "false":
+        run_master_test_start_process(environment)
+        run_worker_test_start_process()
 
 
 class PerformanceTests(FastHttpUser):
