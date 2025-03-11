@@ -64,13 +64,9 @@ def _(parser):
     )
 
 
-def run_master_test_start_process(environment):
-    global HEADER
-
-    HEADER = locust_helper.set_header()
-
+def run_master_test_start_process(header, environment):
     # Generate dataset file
-    response = locust_helper.get_dataset_metadata(HEADER)
+    response = locust_helper.get_dataset_metadata(header)
 
     if response.status_code == 404:
         logger.info("Generating dataset file...")
@@ -88,22 +84,21 @@ def run_master_test_start_process(environment):
         locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
 
     # Publish 1 schema for endpoint testing
-    response = locust_helper.get_schema_metadata(HEADER)
+    response = locust_helper.get_schema_metadata(header)
 
     if response.status_code == 404:
         logger.info("Publishing SDS schema for testing...")
         schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-        locust_helper.create_schema_record_before_test(HEADER, schema_payload)
+        locust_helper.create_schema_record_before_test(header, schema_payload)
 
 
-def run_worker_test_start_process():
-    global HEADER
+def run_worker_test_start_process(header):
     global SCHEMA_GUID
     global DATASET_ID
 
     # Get schema guid
     logger.info("Retrieving schema GUID")
-    SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(HEADER)
+    SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(header)
     logger.info(f"Test schema GUID: {SCHEMA_GUID}")
 
     # Get dataset ID
@@ -111,7 +106,7 @@ def run_worker_test_start_process():
     if config.OAUTH_CLIENT_ID == "localhost":
         DATASET_ID = locust_helper.get_dataset_id_from_local()
     else:
-        DATASET_ID = locust_helper.get_dataset_id(HEADER, config.TEST_DATASET_FILE)
+        DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
     logger.info(f"Test dataset ID: {DATASET_ID}")
 
     logger.info("Preparation for testing is complete. Test will be starting")
@@ -123,19 +118,21 @@ def on_test_start(environment, **kwargs):
     Function to run before the test starts
     """
     logger.info("Setting header for requests")
+    global HEADER
+    HEADER = locust_helper.set_header()
 
     if os.environ.get("LOCUST_HEADLESS") == "true":
         if not isinstance(environment.runner, MasterRunner):
             # Worker Node operation
-            run_worker_test_start_process()
+            run_worker_test_start_process(HEADER)
 
         else:
             # Master Node operation
-            run_master_test_start_process(environment)
+            run_master_test_start_process(HEADER, environment)
 
     if os.environ.get("LOCUST_HEADLESS") == "false":
-        run_master_test_start_process(environment)
-        run_worker_test_start_process()
+        run_master_test_start_process(HEADER, environment)
+        run_worker_test_start_process(HEADER)
 
 
 class PerformanceTests(FastHttpUser):

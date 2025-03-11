@@ -329,6 +329,7 @@ class LocustHelper:
         Wait and get schema guid from SDS
 
         Args:
+            headers (dict): the headers for the request
             attempts (int): the number of attempts to make
             backoff (int): the backoff time
 
