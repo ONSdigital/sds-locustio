@@ -21,7 +21,7 @@ if __name__ == "__main__":
     client = scheduler_v1.CloudSchedulerClient()
 
     request = scheduler_v1.RunJobRequest(
-        name=f"projects/{args.project_id}/locations/europe-west2/jobs/trigger-new-dataset"
+        name=f"projects/{args.project_id}/locations/europe-west2/jobs/trigger-create-dataset"
     )
 
     client.run_job(request=request)
