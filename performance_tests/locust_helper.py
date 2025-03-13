@@ -59,10 +59,11 @@ class LocustHelper:
             raise RuntimeError(f"Error deleting file: {e}")
 
     # Create a schema record before testing
-    def create_schema_record_before_test(self, headers: str, payload: dict) -> str:
+    def create_schema_record_before_test(self, headers: dict, payload: dict) -> str:
         """Creates schema for testing purposes
 
         Args:
+            headers (dict): the headers for the request
             payload (json): json to be sent to API
 
         Returns:
@@ -121,11 +122,12 @@ class LocustHelper:
             )
 
     # Post dataset to SDS, only for localhost
-    def post_dataset_to_local_endpoint(self, headers: str, payload: dict) -> None:
+    def post_dataset_to_local_endpoint(self, headers: dict, payload: dict) -> None:
         """
         Publishes dataset to sds in local environment
 
         Args:
+            headers (dict): the headers for the request
             payload (json): json to be sent to API
 
         """
@@ -207,11 +209,12 @@ class LocustHelper:
         raise RuntimeError(f"Error uploading file {file}.")
 
     # Get dataset id from spin up dataset
-    def get_dataset_id(self, headers: str, filename: str) -> str:
+    def get_dataset_id(self, headers: dict, filename: str) -> str:
         """
         Get dataset id from the dataset.json file
 
         Args:
+            headers (dict): the headers for the request
             filename (str): the name of the file
 
         Returns:
@@ -222,7 +225,7 @@ class LocustHelper:
     # Wait and get dataset id from SDS
     def wait_and_get_dataset_id(
         self,
-        headers: str,
+        headers: dict,
         filename: str,
         attempts: int = 10,
         backoff: int = 0.25,
@@ -231,6 +234,7 @@ class LocustHelper:
         Wait and get dataset id from SDS
 
         Args:
+            headers (dict): the headers for the request
             filename (str): the name of the file
             attempts (int): the number of attempts to make
             backoff (int): the backoff time
@@ -317,7 +321,7 @@ class LocustHelper:
     # Wait and get schema guid from SDS
     def wait_and_get_schema_guid(
         self,
-        headers: str,
+        headers: dict,
         attempts: int = 10,
         backoff: int = 0.25,
     ) -> str:
@@ -325,6 +329,7 @@ class LocustHelper:
         Wait and get schema guid from SDS
 
         Args:
+            headers (dict): the headers for the request
             attempts (int): the number of attempts to make
             backoff (int): the backoff time
 
@@ -346,7 +351,7 @@ class LocustHelper:
 
     def get_schema_metadata(
         self,
-        headers: str,
+        headers: dict,
     ) -> requests.Response:
         """
         Get schema metadata from db
@@ -363,7 +368,7 @@ class LocustHelper:
 
     def get_dataset_metadata(
         self,
-        headers: str,
+        headers: dict,
     ) -> requests.Response:
         """
         Get dataset metadata from db
