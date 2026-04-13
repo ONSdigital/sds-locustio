@@ -76,6 +76,7 @@ ignore = [
     # subprocess call is used in some places and is not a security concern
     "S603",
     "PLW1510",
+    "S607",
     # random digit generation is used in some places and is not a security concern
     "S311",
     # temporary allow global statement

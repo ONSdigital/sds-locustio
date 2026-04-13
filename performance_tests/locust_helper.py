@@ -258,7 +258,7 @@ class LocustHelper:
         # Note: This is a workaround to force run the cloud scheduler to trigger the new dataset upload function.
         subprocess.run(
             [
-                "/usr/bin/python",
+                "python",
                 "run_schedule_job.py",
                 "--project_id",
                 config.PROJECT_ID
