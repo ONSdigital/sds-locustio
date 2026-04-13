@@ -1,13 +1,16 @@
 steps:
-  - name: python:3.11
+  - name: python:3.13
     id: "Check linting and code formatting"
     entrypoint: sh
     args:
       - "-c"
       - |
+        pip install --upgrade pip --user
+        pip install uv
+        uv sync
         make lint
 
-  - name: docker
+  - name: gcr.io/cloud-builders/docker
     id: "docker build and push"
     entrypoint: sh
     args:
