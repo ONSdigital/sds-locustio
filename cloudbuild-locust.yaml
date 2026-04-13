@@ -16,7 +16,7 @@ steps:
     args:
       - "-c"
       - |
-        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" performance_tests/
+        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" .
         docker push "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest"
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
