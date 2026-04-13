@@ -72,6 +72,14 @@ ignore = [
     # indentation contains tabs
     "W191",
 
+    # Locust SPECIFIC BELOW THIS LINE
+    # subprocess call is used in some places and is not a security concern
+    "S603",
+    # random digit generation is used in some places and is not a security concern
+    "S311",
+    # temporary allow global statement
+    "PLW0603"
+
     # SDS SPECIFIC BELOW THIS LINE
     # Function call as default argument
 #    "B008",

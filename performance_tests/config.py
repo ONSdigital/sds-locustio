@@ -13,7 +13,6 @@ class Config:
         "default",
     )
     DATABASE = get_value_from_env("DATABASE", "sds")
-    FIXED_IDENTIFIERS = ["43532", "65871"]
 
 
 config = Config()

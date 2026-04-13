@@ -7,6 +7,9 @@ from config import config
 
 logger = logging.getLogger(__name__)
 
+MIN_DATASET_ENTRIES = 10
+MAX_DATASET_ENTRIES = 90000
+
 
 class JsonGenerator:
     def __init__(
@@ -24,7 +27,7 @@ class JsonGenerator:
         """
         Generate the dataset file.
         """
-        if dataset_entries < 10 or dataset_entries > 90000:
+        if dataset_entries < MIN_DATASET_ENTRIES or dataset_entries > MAX_DATASET_ENTRIES:
             raise ValueError("dataset_entries must be between 10 and 90000")
 
         try:
@@ -107,7 +110,7 @@ class JsonGenerator:
         if self.unit_data_from_str is not None:
             return self.unit_data_from_str
 
-        with open(config.UNIT_DATA_FILE, "r") as file:
+        with open(config.UNIT_DATA_FILE) as file:
             txt = file.read()
             file.close()
 

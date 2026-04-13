@@ -1,13 +1,14 @@
 import datetime
 import logging
 import os
-from locust import FastHttpUser, between, events, task
-from locust.runners import MasterRunner
+from http import HTTPStatus
 
 from config import config
 from json_generator import JsonGenerator
+from locust import FastHttpUser, between, events, task
+from locust.runners import MasterRunner
 from locust_helper import LocustHelper
-from locust_test import locust_test_id
+from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
 
 # Set up logging
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 BASE_URL = config.BASE_URL
 HEADER = ""
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
-TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
+TEST_UNIT_DATA_IDENTIFIER = FIXED_IDENTIFIERS[0]
 SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 DATASET_ID = ""
 SCHEMA_GUID = "UNASSIGNED"
@@ -30,7 +31,7 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
     os.environ["LOCUST_CSV"] += subpath
 
 # Initialize LocustHelper class
-locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, locust_test_id)
+locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, LOCUST_TEST_ID)
 
 
 @events.init_command_line_parser.add_listener
@@ -65,13 +66,13 @@ def run_master_test_start_process(header, environment):
     # Generate dataset file
     response = locust_helper.get_dataset_metadata(header)
 
-    if response.status_code == 404:
+    if response.status_code == HTTPStatus.NOT_FOUND:
         logger.info("Generating dataset file...")
 
         json_generator = JsonGenerator(
-            locust_test_id,
+            LOCUST_TEST_ID,
             config.TEST_DATASET_FILE,
-            config.FIXED_IDENTIFIERS,
+            FIXED_IDENTIFIERS,
         )
 
         json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
@@ -83,7 +84,7 @@ def run_master_test_start_process(header, environment):
     # Publish 1 schema for endpoint testing
     response = locust_helper.get_schema_metadata(header)
 
-    if response.status_code == 404:
+    if response.status_code == HTTPStatus.NOT_FOUND:
         logger.info("Publishing SDS schema for testing...")
         schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
         locust_helper.create_schema_record_before_test(header, schema_payload)
@@ -100,10 +101,7 @@ def run_worker_test_start_process(header):
 
     # Get dataset ID
     logger.info("Retrieving dataset ID")
-    if config.OAUTH_CLIENT_ID == "localhost":
-        DATASET_ID = locust_helper.get_dataset_id_from_local()
-    else:
-        DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
+    DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
     logger.info(f"Test dataset ID: {DATASET_ID}")
 
     logger.info("Preparation for testing is complete. Test will be starting")
@@ -153,11 +151,10 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_schema_metadata_v1(self):
         """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_schema_metadata"
+            self.environment.parsed_options.test_endpoints in ("all", "get_schema_metadata")
         ):
             self.client.get(
-                f"{BASE_URL}/v1/schema_metadata?survey_id={locust_test_id}",
+                f"{BASE_URL}/v1/schema_metadata?survey_id={LOCUST_TEST_ID}",
                 headers=HEADER,
             )
         else:
@@ -168,11 +165,10 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_schema_v1(self):
         """Performance test task for the `http_get_sds_schema_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_schema"
+            self.environment.parsed_options.test_endpoints in ("all", "get_schema")
         ):
             self.client.get(
-                f"{BASE_URL}/v1/schema?survey_id={locust_test_id}",
+                f"{BASE_URL}/v1/schema?survey_id={LOCUST_TEST_ID}",
                 headers=HEADER,
             )
         else:
@@ -183,8 +179,7 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_schema_v2(self):
         """Performance test task for the `http_get_sds_schema_v2` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_schema_v2"
+            self.environment.parsed_options.test_endpoints in ("all", "get_schema_v2")
         ):
             self.client.get(
                 f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
@@ -198,11 +193,10 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_dataset_metadata_v1(self):
         """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_dataset_metadata"
+            self.environment.parsed_options.test_endpoints in ("all", "get_dataset_metadata")
         ):
             self.client.get(
-                f"{BASE_URL}/v1/dataset_metadata?survey_id={locust_test_id}&period_id={locust_test_id}",
+                f"{BASE_URL}/v1/dataset_metadata?survey_id={LOCUST_TEST_ID}&period_id={LOCUST_TEST_ID}",
                 headers=HEADER,
             )
         else:
@@ -213,8 +207,7 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_unit_data_v1(self):
         """Performance test task for the `http_get_sds_unit_data_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_unit_data"
+            self.environment.parsed_options.test_endpoints in ("all", "get_unit_data")
         ):
             self.client.get(
                 f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
@@ -229,8 +222,7 @@ class PerformanceTests(FastHttpUser):
     def http_get_sds_survey_list_v1(self):
         """Performance test task for the `http_get_sds_survey_list_v1` function"""
         if (
-            self.environment.parsed_options.test_endpoints == "all"
-            or self.environment.parsed_options.test_endpoints == "get_survey_list"
+            self.environment.parsed_options.test_endpoints in ("all", "get_survey_list")
         ):
             self.client.get(f"{BASE_URL}/v1/survey_list", headers=HEADER)
         else:
