@@ -1,11 +1,11 @@
 import datetime
 import logging
 import os
+from locust import FastHttpUser, between, events, task
+from locust.runners import MasterRunner
 
 from config import config
 from json_generator import JsonGenerator
-from locust import FastHttpUser, between, events, task
-from locust.runners import MasterRunner
 from locust_helper import LocustHelper
 from locust_test import locust_test_id
 
@@ -22,9 +22,6 @@ TEST_UNIT_DATA_IDENTIFIER = config.FIXED_IDENTIFIERS[0]
 SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 DATASET_ID = ""
 SCHEMA_GUID = "UNASSIGNED"
-
-if config.OAUTH_CLIENT_ID == "localhost":
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "sandbox-key.json"
 
 # Set the subpath for the csv file with current timestamp if headless mode is enabled
 if os.environ.get("LOCUST_HEADLESS") == "true":
@@ -130,7 +127,7 @@ def on_test_start(environment, **kwargs):
             # Master Node operation
             run_master_test_start_process(HEADER, environment)
 
-    if os.environ.get("LOCUST_HEADLESS") == "false":
+    else:
         run_master_test_start_process(HEADER, environment)
         run_worker_test_start_process(HEADER)
 

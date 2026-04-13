@@ -4,11 +4,11 @@ import os
 import subprocess
 import time
 from pathlib import Path
-
 import google.oauth2.id_token
 import requests
+from google.cloud import exceptions, storage, iam_credentials_v1
+
 from config import config
-from google.cloud import exceptions, storage
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +18,34 @@ class LocustHelper:
         self.base_url = base_url
         self.database_name = database_name
         self.locust_test_id = locust_test_id
+        self.iam_client = iam_credentials_v1.IAMCredentialsClient()
 
     # Token expiry time is 1 hour and that will be the max time for the test at the moment
     def set_header(self) -> dict:
         """Set header for SDS requests"""
-        auth_req = google.auth.transport.requests.Request()
-        auth_token = google.oauth2.id_token.fetch_id_token(
-            auth_req, audience=config.OAUTH_CLIENT_ID
-        )
-        return {"Authorization": f"Bearer {auth_token}"}
+        if config.CONF == "locust-local":
+            impersonated_sa_email = f"{config.PROJECT_ID}@appspot.gserviceaccount.com"
+            resource_name = f"projects/-/serviceAccounts/{impersonated_sa_email}"
+
+            response = self.iam_client.generate_id_token(
+                name=resource_name,
+                audience=config.OAUTH_CLIENT_ID,
+                include_email=True
+            )
+
+            auth_token = response.token
+
+        else:
+            auth_req = google.auth.transport.requests.Request()
+            auth_token = google.oauth2.id_token.fetch_id_token(
+                auth_req, audience=config.OAUTH_CLIENT_ID
+            )
+
+        return {
+            "Authorization": f"Bearer {auth_token}",
+            "Content-Type": "application/json",
+        }
+
 
     # Delete all documents in a bucket folder
     def delete_docs(self, survey_id: str, bucket_name: str) -> None:
@@ -247,8 +266,7 @@ class LocustHelper:
 
             if response.status_code == 200:
                 for dataset_metadata in response.json():
-                    if dataset_metadata["filename"] == filename:
-                        return dataset_metadata["dataset_id"]
+                    return dataset_metadata["dataset_id"]
 
             attempts -= 1
             time.sleep(backoff)

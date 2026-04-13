@@ -4,13 +4,6 @@ This repository contains the locust performance testing components for the SDS a
 
 ### Setting up a virtual environment
 
-Check that you have the correct version of Python installed and then run the following commands:
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r performance_tests/requirements.txt
-```
 
 ## Locust performance testing with the SDS docker version running at http://127.0.0.1:3000/
 
@@ -51,7 +44,7 @@ OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercon
 ```bash
 gcloud auth login
 gcloud config set project $PROJECT_ID
-gcloud builds submit --tag europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest performance_tests/
+gcloud builds submit --tag europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest .
 ```
 
 ### Add service account to run locust app
@@ -84,7 +77,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locu
 ### Deploy the container to cloud run
 
 ```bash
-gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=false --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=1 --max-instances=100 --cpu=8 --memory=32Gi
+gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=false --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=1 --cpu=8 --memory=32Gi
 ```
 
 ### Add permission

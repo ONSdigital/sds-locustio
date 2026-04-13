@@ -1,6 +1,11 @@
 import json
+import logging
 import random
 from pathlib import Path
+
+from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class JsonGenerator:
@@ -28,16 +33,14 @@ class JsonGenerator:
                     dataset_entries, self.survey_id, self.fixed_identifiers
                 )
 
-                # Specify the output file name
-                output_file_name = self.file_name
-
                 # Write the JSON data to a file
-                with open(output_file_name, "w") as json_file:
+                with open(self.file_name, "w") as json_file:
                     json.dump(json_data, json_file, indent=2)
 
-                print(f"Data successfully written to {output_file_name}")
+                logging.info(f"Data successfully written to {self.file_name}")
         except Exception as e:
-            print(f"Error generating dataset file: {e}")
+            logging.error(f"Error generating dataset file: {e}")
+
 
     def _generate_json_data(
         self, dataset_entries: int, survey_id: str, fixed_identifiers: list[str]
@@ -68,7 +71,7 @@ class JsonGenerator:
                 unique_ids, working_fixed_identifiers
             )
             unique_ids.add(identifier)
-            unit_data = self._generate_unit_data(dataset_entries)
+            unit_data = self._generate_unit_data()
             data["data"].append({"identifier": identifier, "unit_data": unit_data})
 
         return data
@@ -95,7 +98,7 @@ class JsonGenerator:
             if identifier not in existing_ids:
                 return working_fixed_identifiers, identifier
 
-    def _generate_unit_data(self, dataset_entries: int) -> str:
+    def _generate_unit_data(self) -> str:
         """
         Generate the unit data content for the dataset file.
         """
@@ -104,7 +107,7 @@ class JsonGenerator:
         if self.unit_data_from_str is not None:
             return self.unit_data_from_str
 
-        with open("unit_data.txt", "r") as file:
+        with open(config.UNIT_DATA_FILE, "r") as file:
             txt = file.read()
             file.close()
 

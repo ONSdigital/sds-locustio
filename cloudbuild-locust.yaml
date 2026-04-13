@@ -1,15 +1,5 @@
 steps:
   - name: python:3.11
-    id: "Upgrade pip"
-    entrypoint: "python"
-    args: ["-m", "pip", "install", "--upgrade", "pip", "--user"]
-
-  - name: python:3.11
-    id: "Install app requirements"
-    entrypoint: python
-    args: ["-m", "pip", "install", "-r", "performance_tests/requirements.txt", "--user"]
-
-  - name: python:3.11
     id: "Check linting and code formatting"
     entrypoint: sh
     args:
