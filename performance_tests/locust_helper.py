@@ -262,7 +262,7 @@ class LocustHelper:
                 "run_schedule_job.py",
                 "--project_id",
                 config.PROJECT_ID
-            ], check=False
+            ]
         )
 
     def delete_all_files_from_bucket(self, bucket_name: str) -> None:
