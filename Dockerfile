@@ -23,9 +23,6 @@ RUN uv sync --frozen --no-install-project --no-dev
 ADD performance_tests /app
 RUN uv sync --frozen --no-dev
 
-# Debug: List contents of /usr/local/bin and /app/.venv/bin to check Locust CLI installation
-RUN ls -l /usr/local/bin && ls -l /app/.venv/bin || true
-
 # Expose the required Locust ports
 EXPOSE 5557 5558 8089
 

@@ -77,7 +77,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locu
 ### Deploy the container to cloud run
 
 ```bash
-gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=false --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=1 --cpu=8 --memory=32Gi
+gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=false --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
 ```
 
 ### Add permission
