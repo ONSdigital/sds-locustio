@@ -30,7 +30,7 @@ if config.OAUTH_CLIENT_ID == "localhost":
 if os.environ.get("LOCUST_HEADLESS") == "true":
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
     subpath = timestamp + "/result"
-    os.environ["LOCUST_CSV"] += subpath
+    os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
 # Initialize LocustHelper class
 locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, locust_test_id)
