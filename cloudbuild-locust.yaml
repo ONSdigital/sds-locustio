@@ -1,29 +1,22 @@
 steps:
-  - name: python:3.11
-    id: "Upgrade pip"
-    entrypoint: "python"
-    args: ["-m", "pip", "install", "--upgrade", "pip", "--user"]
-
-  - name: python:3.11
-    id: "Install app requirements"
-    entrypoint: python
-    args: ["-m", "pip", "install", "-r", "performance_tests/requirements.txt", "--user"]
-
-  - name: python:3.11
+  - name: python:3.13
     id: "Check linting and code formatting"
     entrypoint: sh
     args:
       - "-c"
       - |
+        pip install --upgrade pip --user
+        pip install uv
+        uv sync
         make lint
 
-  - name: docker
+  - name: gcr.io/cloud-builders/docker
     id: "docker build and push"
     entrypoint: sh
     args:
       - "-c"
       - |
-        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" performance_tests/
+        docker build -t "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest" .
         docker push "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest"
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"

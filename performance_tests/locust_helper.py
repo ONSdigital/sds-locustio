@@ -1,9 +1,8 @@
 import json
 import logging
-import os
 import subprocess
 import time
-from pathlib import Path
+from http import HTTPStatus
 
 import google.oauth2.id_token
 import requests
@@ -26,7 +25,12 @@ class LocustHelper:
         auth_token = google.oauth2.id_token.fetch_id_token(
             auth_req, audience=config.OAUTH_CLIENT_ID
         )
-        return {"Authorization": f"Bearer {auth_token}"}
+
+        return {
+            "Authorization": f"Bearer {auth_token}",
+            "Content-Type": "application/json",
+        }
+
 
     # Delete all documents in a bucket folder
     def delete_docs(self, survey_id: str, bucket_name: str) -> None:
@@ -42,21 +46,6 @@ class LocustHelper:
 
         for blob in blobs:
             blob.delete()
-
-    # Delete a local file
-    def delete_local_file(self, file: str) -> None:
-        """
-        Deletes a local file
-
-        Args:
-            file (str): the name of the file
-        """
-        try:
-            if Path(file).is_file():
-                os.remove(file)
-        except Exception as e:
-            logging.error(f"Error deleting file: {e}")
-            raise RuntimeError(f"Error deleting file: {e}")
 
     # Create a schema record before testing
     def create_schema_record_before_test(self, headers: dict, payload: dict) -> str:
@@ -83,7 +72,7 @@ class LocustHelper:
             logging.error(f"Locust on start: Error spinning up schema for testing: {e}")
             raise RuntimeError(
                 f"Locust on start: Error spinning up schema for testing: {e}"
-            )
+            ) from e
 
     # Create a dataset record before testing
     def create_dataset_record_before_test(self, file: str) -> None:
@@ -94,24 +83,20 @@ class LocustHelper:
 
         """
         try:
-            if config.OAUTH_CLIENT_ID == "localhost":
-                post_sds_dataset_payload = self.load_json(file)
-                self.post_dataset_to_local_endpoint(post_sds_dataset_payload)
-            else:
-                logger.info("Cleaning up dataset bucket...")
-                self.delete_all_files_from_bucket(
-                    f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-                )
-                logger.info("Uploading file to bucket...")
-                self.upload_file_to_bucket(
-                    file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-                )
-                logger.info("Wait and check if file is uploaded...")
-                self.wait_and_check_file_is_uploaded(
-                    file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-                )
-                logger.info("Force running schedule job to publish dataset...")
-                self.force_run_schedule_job()
+            logger.info("Cleaning up dataset bucket...")
+            self.delete_all_files_from_bucket(
+                f"{config.PROJECT_ID}-sds-europe-west2-dataset"
+            )
+            logger.info("Uploading file to bucket...")
+            self.upload_file_to_bucket(
+                file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
+            )
+            logger.info("Wait and check if file is uploaded...")
+            self.wait_and_check_file_is_uploaded(
+                file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
+            )
+            logger.info("Force running schedule job to publish dataset...")
+            self.force_run_schedule_job()
 
         except Exception as e:
             logging.error(
@@ -119,24 +104,7 @@ class LocustHelper:
             )
             raise RuntimeError(
                 f"Locust on start: Error spinning up dataset for testing: {e}"
-            )
-
-    # Post dataset to SDS, only for localhost
-    def post_dataset_to_local_endpoint(self, headers: dict, payload: dict) -> None:
-        """
-        Publishes dataset to sds in local environment
-
-        Args:
-            headers (dict): the headers for the request
-            payload (json): json to be sent to API
-
-        """
-        requests.post(
-            "http://localhost:3006/",
-            headers=headers,
-            json=payload,
-            timeout=60,
-        )
+            ) from e
 
     # Get bucket from SDS
     def get_bucket(self, bucket_name: str) -> None:
@@ -152,9 +120,9 @@ class LocustHelper:
                 bucket_name,
             )
             return bucket
-        except exceptions.NotFound:
-            logging.error(f"PT: Error getting bucket: {bucket_name}.")
-            raise RuntimeError(f"Error getting bucket: {bucket_name}.")
+        except exceptions.NotFound as exc:
+            logging.error(f"Error getting bucket: {bucket_name}.")
+            raise RuntimeError(f"Error getting bucket: {bucket_name}.") from exc
 
     # Upload a file to SDS bucket
     def upload_file_to_bucket(self, file: str, bucket_name: str) -> None:
@@ -173,8 +141,9 @@ class LocustHelper:
                 file,
                 content_type="application/json",
             )
-        except exceptions:
-            raise RuntimeError(f"Error uploading file {file}.")
+        except exceptions as exc:
+            logging.error(f"Error uploading file {file}.")
+            raise RuntimeError(f"Error uploading file {file}.") from exc
 
     def wait_and_check_file_is_uploaded(self, file: str, bucket_name: str) -> None:
         """
@@ -245,35 +214,15 @@ class LocustHelper:
         while attempts != 0:
             response = self.get_dataset_metadata(headers)
 
-            if response.status_code == 200:
+            if response.status_code == HTTPStatus.OK:
                 for dataset_metadata in response.json():
-                    if dataset_metadata["filename"] == filename:
-                        return dataset_metadata["dataset_id"]
+                    return dataset_metadata["dataset_id"]
 
             attempts -= 1
             time.sleep(backoff)
             backoff += backoff
 
         raise RuntimeError(f"Error getting dataset id using filename: {filename}.")
-
-    # Get dataset id from local endpoint
-    def get_dataset_id_from_local(self) -> str:
-        """
-        Get dataset id from local endpoint
-
-        Returns:
-            str: the dataset id
-        """
-
-        response = requests.get(
-            f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}"
-        )
-
-        if response.status_code == 200:
-            for dataset_metadata in response.json():
-                return dataset_metadata["dataset_id"]
-        else:
-            raise RuntimeError("Error getting dataset id from local endpoint.")
 
     def load_json(self, filepath: str) -> dict:
         """
@@ -298,7 +247,7 @@ class LocustHelper:
                 "python",
                 "run_schedule_job.py",
                 "--project_id",
-                config.PROJECT_ID,
+                config.PROJECT_ID
             ]
         )
 
@@ -339,7 +288,7 @@ class LocustHelper:
         while attempts != 0:
             response = self.get_schema_metadata(headers)
 
-            if response.status_code == 200:
+            if response.status_code == HTTPStatus.OK:
                 for schema_metadata in response.json():
                     return schema_metadata["guid"]
 
@@ -362,6 +311,7 @@ class LocustHelper:
         response = requests.get(
             f"{self.base_url}/v1/schema_metadata?survey_id={self.locust_test_id}",
             headers=headers,
+            timeout=60,
         )
 
         return response
@@ -379,6 +329,7 @@ class LocustHelper:
         response = requests.get(
             f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}",
             headers=headers,
+            timeout=60,
         )
 
         return response

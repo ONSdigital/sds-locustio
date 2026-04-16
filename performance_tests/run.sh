@@ -15,8 +15,8 @@
 # limitations under the License.
 
 
-LOCUST="/usr/local/bin/locust"
-LOCUS_OPTS="-f /locustfile.py --host=$TARGET_HOST"
+LOCUST="uv run locust"
+LOCUS_OPTS="-f locustfile.py --host=$TARGET_HOST"
 LOCUST_MODE=${LOCUST_MODE:-standalone}
 
 if [[ "$LOCUST_MODE" = "master" ]]; then

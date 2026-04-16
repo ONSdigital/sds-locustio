@@ -1,1 +1,2 @@
-locust_test_id = "locust_test_123"
+LOCUST_TEST_ID = "locust_test_123"
+FIXED_IDENTIFIERS = ["43532", "65871"]

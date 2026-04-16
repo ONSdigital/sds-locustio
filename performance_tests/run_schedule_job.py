@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 from google.cloud import scheduler_v1
 
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     # Check if the required arguments are given
     if not args.project_id:
         logging.error("No project_id is given to delete data")
-        exit()
+        sys.exit()
 
     client = scheduler_v1.CloudSchedulerClient()
 

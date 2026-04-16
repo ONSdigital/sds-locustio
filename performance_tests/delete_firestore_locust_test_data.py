@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 
 from google.cloud import firestore
 
@@ -24,7 +25,7 @@ def delete_firestore_locust_test_data(
         delete_collection_in_batches(datasets_collection, survey_id, 100)
     except Exception as e:
         logging.error(f"Error. Failed to delete firestore locust test data {e}")
-        raise RuntimeError(f"Failed to delete firestore locust test data {e}")
+        raise RuntimeError(f"Failed to delete firestore locust test data {e}") from e
 
 
 def delete_collection_in_batches(
@@ -58,13 +59,13 @@ if __name__ == "__main__":
     # Check if the required arguments are given
     if not args.survey_id:
         logging.error("No survey_id is given to delete data")
-        exit()
+        sys.exit()
     if not args.project_id:
         logging.error("No project_id is given to delete data")
-        exit()
+        sys.exit()
     if not args.database_name:
         logging.error("No database_name is given to delete data")
-        exit()
+        sys.exit()
 
     delete_firestore_locust_test_data(
         args.project_id, args.database_name, args.survey_id

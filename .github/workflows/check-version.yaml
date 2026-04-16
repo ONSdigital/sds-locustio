@@ -1,0 +1,24 @@
+name: Check pyproject.toml version
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  check-version:
+    name: Python
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v6
+
+      - name: Check version in pyproject.toml
+        run: |
+          uv run --only-group version-check python .github/scripts/check_version.py
