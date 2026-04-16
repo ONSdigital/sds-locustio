@@ -2,52 +2,24 @@
 
 This repository contains the locust performance testing components for the SDS application.
 
-### Setting up a virtual environment
+**This readme is a guidance for testing the locust application in a sandbox environment only and is not intended for production use.**
 
-
-## Locust performance testing with the SDS docker version running at http://127.0.0.1:3000/
-
-- Set the OAUTH_CLIENT_ID value as 'localhost'
-- Place the 'sandbox-key.json' in the 'performance_tests' directory and set the env variable 'GOOGLE_APPLICATION_CREDENTIALS'
+## Initialise UV
 
 ```bash
-export OAUTH_CLIENT_ID=localhost
+make setup
 ```
 
-### Start the locust local web server
+## Locust performance testing with the SDS cloud service running in the GCP project
 
-Switch to the 'performance_tests' directory
-
-```bash
-locust -f locustfile.py
-```
-
-- Open the locust web UI at http://0.0.0.0:8089/
-- Enter some parameters for the number of concurrent users and ramp up rate
-- Click 'Start Swarming' to start the test
-
-## Locust performance testing with the SDS cloud version running in the GCP project
-
-### Framework dockerized and run as a job
-
-### Build the locust container and push to the GCP container registry
-
-- Switch to the 'sds-locustio' directory
-- Set the below env variables
+### Make sure the Project ID is specified and set in gcloud config
 
 ```bash
-PROJECT_ID=ons-sds-sandbox-01
-BASE_URL=https://34.160.14.110.nip.io
-OAUTH_CLIENT_ID=293516424663-6ebeaknvn4b3s6lplvo6v12trahghfsc.apps.googleusercontent.com
-```
-
-```bash
-gcloud auth login
+PROJECT_ID=<your-project-id>
 gcloud config set project $PROJECT_ID
-gcloud builds submit --tag europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest .
 ```
 
-### Add service account to run locust app
+### Add service account to run the locust app (if not exists)
 
 - Go to IAM page on project
 - Check if service account <locustrun@PROJECT_ID.iam.gserviceaccount.com> exist
@@ -74,13 +46,13 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locu
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:locustrun@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/cloudscheduler.admin"
 ```
 
-### Deploy the container to cloud run
+### Build and deploy locust performance testing as cloud run service (with UI)
 
 ```bash
-gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=false --region=europe-west2 --port=8089 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
+make deploy-locust-service
 ```
 
-### Add permission
+#### Add permission
 
 Since the Locust app requires authentication, one will have to grant Cloud Run Admin role to their GCP account on the Locust app
 By gcloud CLI:
@@ -98,12 +70,12 @@ Alternatively, role can be granted on GCP console:
 3) Click Permission
 4) Add principal <youremail@address> with role Cloud Run Admin
 
-### Access the locust app
+#### Access the locust app
 
 Run on local terminal:
 
 ```bash
-gcloud run services proxy locust-tasks --project $PROJECT_ID --region europe-west2
+make run-locust-cloud
 ```
 
 Then open a web browser and access URL: http://127.0.0.1:8080/
@@ -117,12 +89,21 @@ gcloud run services proxy locust-tasks --project $PROJECT_ID --region europe-wes
 
 If run on cloud terminal, check on terminal and click the link http://127.0.0.1:8080/
 
-### Deploy and execute locust in headless mode
+### Build and deploy locust performance testing in headless mode (without UI)
 
 Headless mode allow Locust to be run without the WebUI
 
+#### Create a bucket to store the locust test result (if not exists)
+To store the locust test result, a bucket with the name format `{PROJECT_ID}-locust-tasks-result` has to be created in the GCP project
+
+```bash
+export PROJECT_ID=$(gcloud config get project)
+gcloud storage buckets create gs://$PROJECT_ID-locust-tasks-result --location=europe-west2
+```
+
 #### Set up the environment variables
 
+Please change the variables on the makefile according to your needs. The usage of the variables is explained in the table below:
 
 | Var Name               | Description                                                          | Value                                                                                                                                  |
 | ---------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -135,34 +116,17 @@ Headless mode allow Locust to be run without the WebUI
 | Locust_Test_Endpoints  | Custom parameter to select test endpoints                            | all / post_schema / get_unit_data (default)/ get_dataset_metadata / get_schema_metadata / get_schema / get_schema_v2 / get_survey_list |
 | Locust_Dataset_Entries | Custom parameter to specify number of unit data in generated dataset | 1000 (default) / User defined                                                                                                          |
 
-```bash
-LOCUST_HEADLESS=true
-LOCUST_LOCUSTFILE=locustfile.py
-LOCUST_USERS=30
-LOCUST_SPAWN_RATE=10
-LOCUST_RUN_TIME=1m
-LOCUST_CSV=locust_tasks_result/
-LOCUST_TEST_ENDPOINTS=get_unit_data
-LOCUST_DATASET_ENTRIES=1000
-LOCUST_PROCESSES=-1
-```
 
-#### Deploy Cloud Run Job and execute
-
-The `--execute-now` flag can be omitted if the job is not required to be executed immediately after deploy. Always omit the flag for first time deployment
+#### Build and deploy locust performance testing in headless mode
 
 ```bash
-gcloud run jobs deploy locust-tasks --image=europe-west2-docker.pkg.dev/$PROJECT_ID/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=$PROJECT_ID,BASE_URL=$BASE_URL,OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID,LOCUST_HEADLESS=$LOCUST_HEADLESS,LOCUST_LOCUSTFILE=$LOCUST_LOCUSTFILE,LOCUST_USERS=$LOCUST_USERS,LOCUST_SPAWN_RATE=$LOCUST_SPAWN_RATE,LOCUST_RUN_TIME=$LOCUST_RUN_TIME,LOCUST_CSV=$LOCUST_CSV,LOCUST_TEST_ENDPOINTS=$LOCUST_TEST_ENDPOINTS,LOCUST_DATASET_ENTRIES=$LOCUST_DATASET_ENTRIES,LOCUST_PROCESSES=$LOCUST_PROCESSES --region=europe-west2 --service-account=locustrun@$PROJECT_ID.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --execute-now
+make deploy-locust-job
 ```
 
-#### Mount a bucket to Locust Job
-
-To facilitate the export of Locust test metrics, a bucket has to be mounted to the job with a path that align with the `Locust_CSV` configuration value
-
-First, create the bucket to store the export files with the name format `{PROJECT_ID}-locust-tasks-result`
-
-Then, hook the bucket with the cloud run job:
+#### Run locust performance testing in headless mode
 
 ```bash
-gcloud beta run jobs update locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=$PROJECT_ID-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
+make run-locust-job
 ```
+
+When locust job is completed, the test result will be stored in the bucket created above with the name format `{PROJECT_ID}-locust-tasks-result/{DATESTAMP}/result_stats.csv`

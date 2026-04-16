@@ -17,10 +17,9 @@ logger = logging.getLogger(__name__)
 # Set global variables
 
 BASE_URL = config.BASE_URL
-HEADER = ""
+HEADER = {}
 DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
 TEST_UNIT_DATA_IDENTIFIER = FIXED_IDENTIFIERS[0]
-SCHEMA_BUCKET = f"{config.PROJECT_ID}-sds-europe-west2-schema"
 DATASET_ID = ""
 SCHEMA_GUID = "UNASSIGNED"
 

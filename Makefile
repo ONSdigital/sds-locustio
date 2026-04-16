@@ -5,7 +5,7 @@ LOCUST_HEADLESS=true
 LOCUST_LOCUSTFILE=locustfile.py
 LOCUST_USERS=30
 LOCUST_SPAWN_RATE=10
-LOCUST_RUN_TIME=1m
+LOCUST_RUN_TIME=5m
 LOCUST_CSV=locust_tasks_result/
 LOCUST_TEST_ENDPOINTS=get_unit_data
 LOCUST_DATASET_ENTRIES=1000
@@ -15,9 +15,11 @@ deploy-locust-service:
 	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest .
 	gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SANDBOX_IP_ADDRESS}.nip.io,LOCUST_HEADLESS=false,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID} --region=europe-west2 --port=8089 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
 
+# Cloud Run Admin role to user account is required to run the following command successfully.
 run-locust-cloud:
 	gcloud run services proxy locust-tasks --project ${PROJECT_ID} --region europe-west2
 
+# Bucket with the name format `{PROJECT_ID}-locust-tasks-result` has to be created beforehand for the following command to run successfully.
 deploy-locust-job:
 	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest .
 	gcloud run jobs deploy locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest --set-env-vars=PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SANDBOX_IP_ADDRESS}.nip.io,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID},LOCUST_HEADLESS=${LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${LOCUST_LOCUSTFILE},LOCUST_USERS=${LOCUST_USERS},LOCUST_SPAWN_RATE=${LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${LOCUST_RUN_TIME},LOCUST_CSV=${LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${LOCUST_PROCESSES} --region=europe-west2 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi
@@ -26,6 +28,8 @@ deploy-locust-job:
 run-locust-job:
 	gcloud run jobs execute locust-tasks --region=europe-west2
 
+# This make target is not working properly at the moment and is due to be fixed in the future.
+# For now, please use the above targets to deploy locust to cloud run and execute the load tests.
 run-locust-local:
 	export CONF='locust-local' && \
 	export PROJECT_ID='${PROJECT_ID}' && \

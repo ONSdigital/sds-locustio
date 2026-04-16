@@ -7,7 +7,7 @@ from http import HTTPStatus
 import google.oauth2.id_token
 import requests
 from config import config
-from google.cloud import exceptions, iam_credentials_v1, storage
+from google.cloud import exceptions, storage
 
 logger = logging.getLogger(__name__)
 
@@ -17,28 +17,14 @@ class LocustHelper:
         self.base_url = base_url
         self.database_name = database_name
         self.locust_test_id = locust_test_id
-        self.iam_client = iam_credentials_v1.IAMCredentialsClient()
 
     # Token expiry time is 1 hour and that will be the max time for the test at the moment
     def set_header(self) -> dict:
         """Set header for SDS requests"""
-        if config.CONF == "locust-local":
-            impersonated_sa_email = f"{config.PROJECT_ID}@appspot.gserviceaccount.com"
-            resource_name = f"projects/-/serviceAccounts/{impersonated_sa_email}"
-
-            response = self.iam_client.generate_id_token(
-                name=resource_name,
-                audience=config.OAUTH_CLIENT_ID,
-                include_email=True
-            )
-
-            auth_token = response.token
-
-        else:
-            auth_req = google.auth.transport.requests.Request()
-            auth_token = google.oauth2.id_token.fetch_id_token(
-                auth_req, audience=config.OAUTH_CLIENT_ID
-            )
+        auth_req = google.auth.transport.requests.Request()
+        auth_token = google.oauth2.id_token.fetch_id_token(
+            auth_req, audience=config.OAUTH_CLIENT_ID
+        )
 
         return {
             "Authorization": f"Bearer {auth_token}",
