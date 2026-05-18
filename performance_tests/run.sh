@@ -16,7 +16,7 @@
 
 
 LOCUST="uv run locust"
-LOCUS_OPTS="-f locustfile.py --host=$TARGET_HOST"
+LOCUS_OPTS="-f locustfile.py "
 LOCUST_MODE=${LOCUST_MODE:-standalone}
 
 if [[ "$LOCUST_MODE" = "master" ]]; then
