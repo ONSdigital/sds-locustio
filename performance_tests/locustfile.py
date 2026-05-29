@@ -3,12 +3,14 @@ import logging
 import os
 from http import HTTPStatus
 
-from config import config
+from configs.config import config
 from json_generator import JsonGenerator
 from locust import FastHttpUser, between, events, task
 from locust.runners import MasterRunner
 from locust_helper import LocustHelper
 from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
+from configs.endpoints_config import SDS_ENDPOINTS, GET_UNIT_DATA, SDS_ENDPOINTS_CHOICE
+from configs.endpoints_helpers import EndpointsHelpers
 
 # Set up logging
 
@@ -40,16 +42,8 @@ def _(parser):
         "--test-endpoints",
         type=str,
         env_var="LOCUST_TEST_ENDPOINTS",
-        choices=[
-            "all",
-            "get_unit_data",
-            "get_dataset_metadata",
-            "get_schema_metadata",
-            "get_schema",
-            "get_schema_v2",
-            "get_survey_list",
-        ],
-        default="get_unit_data",
+        choices= SDS_ENDPOINTS_CHOICE,
+        default=GET_UNIT_DATA,
         help="Choose endpoints to test",
     )
     parser.add_argument(
@@ -105,6 +99,9 @@ def run_worker_test_start_process(header):
 
     logger.info("Preparation for testing is complete. Test will be starting")
 
+    config.SCHEMA_GUID = SCHEMA_GUID
+    config.DATASET_ID = DATASET_ID
+
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
@@ -114,6 +111,8 @@ def on_test_start(environment, **kwargs):
     logger.info("Setting header for requests")
     global HEADER
     HEADER = locust_helper.set_header()
+
+    config.HEADER = HEADER
 
     if os.environ.get("LOCUST_HEADLESS") == "true":
         if not isinstance(environment.runner, MasterRunner):
@@ -132,10 +131,12 @@ def on_test_start(environment, **kwargs):
 class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
     host = config.BASE_URL
+    endpoint_helpers: EndpointsHelpers
 
     def __init__(self, *args, **kwargs):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
+        self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, SDS_ENDPOINTS)
 
     def on_start(self):
         super().on_start()
@@ -203,14 +204,19 @@ class PerformanceTests(FastHttpUser):
 
     # Test unit data endpoint
     @task
-    def http_get_sds_unit_data_v1(self):
-        """Performance test task for the `http_get_sds_unit_data_v1` function"""
+    def http_get_sds_unit_data(self):
+        """Performance test task for the `http_get_sds_unit_data` function"""
         if (
             self.environment.parsed_options.test_endpoints in ("all", "get_unit_data")
         ):
-            self.client.get(
-                f"{BASE_URL}/v1/unit_data?dataset_id={DATASET_ID}&identifier={TEST_UNIT_DATA_IDENTIFIER}",
-                headers=HEADER,
+            self.endpoint_helpers.send_request(
+                client = self.client,
+                endpoint_name = GET_UNIT_DATA,
+                params = {
+                    "dataset_id": config.DATASET_ID,
+                    "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
+                },
+                headers = config.HEADER,
             )
 
         else:

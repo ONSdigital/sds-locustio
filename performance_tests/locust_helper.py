@@ -6,7 +6,7 @@ from http import HTTPStatus
 
 import google.oauth2.id_token
 import requests
-from config import config
+from configs.config import config
 from google.cloud import exceptions, storage
 
 logger = logging.getLogger(__name__)

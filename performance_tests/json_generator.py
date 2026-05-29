@@ -3,7 +3,7 @@ import logging
 import random
 from pathlib import Path
 
-from config import config
+from configs.config import config
 
 logger = logging.getLogger(__name__)
 
