@@ -6,6 +6,8 @@ from http import HTTPStatus
 
 import google.oauth2.id_token
 import requests
+from google.cloud.storage import Bucket
+
 from configs.config import config
 from google.cloud import exceptions, storage
 
@@ -107,7 +109,7 @@ class LocustHelper:
             ) from e
 
     # Get bucket from SDS
-    def get_bucket(self, bucket_name: str) -> None:
+    def get_bucket(self, bucket_name: str) -> Bucket | None:
         """
         Get bucket from SDS
 
@@ -138,7 +140,7 @@ class LocustHelper:
         try:
             blob = storage_bucket.blob(file)
             blob.upload_from_filename(
-                file,
+                filename=file,
                 content_type="application/json",
             )
         except exceptions as exc:

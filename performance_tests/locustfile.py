@@ -5,25 +5,21 @@ from http import HTTPStatus
 
 from configs.config import config
 from json_generator import JsonGenerator
-from locust import FastHttpUser, between, events, task
+from locust import FastHttpUser, between, events
 from locust.runners import MasterRunner
 from locust_helper import LocustHelper
 from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
-from configs.endpoints_config import SDS_ENDPOINTS, GET_UNIT_DATA, SDS_ENDPOINTS_CHOICE
+from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_ENDPOINTS_DEFAULT
 from configs.endpoints_helpers import EndpointsHelpers
+from configs.runtime_config import RuntimeConfig
 
 # Set up logging
 
 logger = logging.getLogger(__name__)
 
-# Set global variables
+# Set up runtime config to store runtime values that are needed across different test methods and processes
 
-BASE_URL = config.BASE_URL
-HEADER = {}
-DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
-TEST_UNIT_DATA_IDENTIFIER = FIXED_IDENTIFIERS[0]
-DATASET_ID = ""
-SCHEMA_GUID = "UNASSIGNED"
+runtime_config = RuntimeConfig()
 
 # Set the subpath for the csv file with current timestamp if headless mode is enabled
 if os.environ.get("LOCUST_HEADLESS") == "true":
@@ -32,7 +28,8 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
     os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
 # Initialize LocustHelper class
-locust_helper = LocustHelper(BASE_URL, DATABASE_NAME, LOCUST_TEST_ID)
+DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
+locust_helper = LocustHelper(config.BASE_URL, DATABASE_NAME, LOCUST_TEST_ID)
 
 
 @events.init_command_line_parser.add_listener
@@ -43,7 +40,7 @@ def _(parser):
         type=str,
         env_var="LOCUST_TEST_ENDPOINTS",
         choices= SDS_ENDPOINTS_CHOICE,
-        default=GET_UNIT_DATA,
+        default=SDS_ENDPOINTS_DEFAULT,
         help="Choose endpoints to test",
     )
     parser.add_argument(
@@ -84,23 +81,17 @@ def run_master_test_start_process(header, environment):
 
 
 def run_worker_test_start_process(header):
-    global SCHEMA_GUID
-    global DATASET_ID
-
     # Get schema guid
     logger.info("Retrieving schema GUID")
-    SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(header)
-    logger.info(f"Test schema GUID: {SCHEMA_GUID}")
+    runtime_config.SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(header)
+    logger.info(f"Test schema GUID: {runtime_config.SCHEMA_GUID}")
 
     # Get dataset ID
     logger.info("Retrieving dataset ID")
-    DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
-    logger.info(f"Test dataset ID: {DATASET_ID}")
+    runtime_config.DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
+    logger.info(f"Test dataset ID: {runtime_config.DATASET_ID}")
 
     logger.info("Preparation for testing is complete. Test will be starting")
-
-    config.SCHEMA_GUID = SCHEMA_GUID
-    config.DATASET_ID = DATASET_ID
 
 
 @events.test_start.add_listener
@@ -109,27 +100,25 @@ def on_test_start(environment, **kwargs):
     Function to run before the test starts
     """
     logger.info("Setting header for requests")
-    global HEADER
-    HEADER = locust_helper.set_header()
-
-    config.HEADER = HEADER
+    runtime_config.HEADER = locust_helper.set_header()
 
     if os.environ.get("LOCUST_HEADLESS") == "true":
         if not isinstance(environment.runner, MasterRunner):
             # Worker Node operation
-            run_worker_test_start_process(HEADER)
+            run_worker_test_start_process(runtime_config.HEADER)
 
         else:
             # Master Node operation
-            run_master_test_start_process(HEADER, environment)
+            run_master_test_start_process(runtime_config.HEADER, environment)
 
     else:
-        run_master_test_start_process(HEADER, environment)
-        run_worker_test_start_process(HEADER)
+        run_master_test_start_process(runtime_config.HEADER, environment)
+        run_worker_test_start_process(runtime_config.HEADER)
 
 
 class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
+    tasks = []
     host = config.BASE_URL
     endpoint_helpers: EndpointsHelpers
 
@@ -144,91 +133,28 @@ class PerformanceTests(FastHttpUser):
     def on_stop(self):
         super().on_stop()
 
-    # Performance tests
 
-    # Test get schema metadata endpoint
-    @task
-    def http_get_sds_schema_metadata_v1(self):
-        """Performance test task for the `http_get_sds_schema_metadata_v1` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_schema_metadata")
-        ):
-            self.client.get(
-                f"{BASE_URL}/v1/schema_metadata?survey_id={LOCUST_TEST_ID}",
-                headers=HEADER,
-            )
-        else:
-            pass
+# Test creating dynamic tasks based on the chosen endpoints - example with get unit data endpoint
+locust_test_methods = []
+for endpoint_name in SDS_ENDPOINTS.keys():
+    logger.info(f"Creating dynamic test method for endpoint: {endpoint_name}")
+    # Closure function to create a test method for an endpoint
+    def create_test_method(endpoint):
+        def test_method(user):
+            selected_endpoints = user.environment.parsed_options.test_endpoints
 
-    # Test get schema endpoint
-    @task
-    def http_get_sds_schema_v1(self):
-        """Performance test task for the `http_get_sds_schema_v1` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_schema")
-        ):
-            self.client.get(
-                f"{BASE_URL}/v1/schema?survey_id={LOCUST_TEST_ID}",
-                headers=HEADER,
-            )
-        else:
-            pass
+            if selected_endpoints not in ("all", endpoint):
+                pass
+            else:
+                user.endpoint_helpers.send_request(
+                    client=user.client,
+                    endpoint_name=endpoint,
+                    runtime_config=runtime_config,
+                )
 
-    # Test get schema v2 endpoint
-    @task
-    def http_get_sds_schema_v2(self):
-        """Performance test task for the `http_get_sds_schema_v2` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_schema_v2")
-        ):
-            self.client.get(
-                f"{BASE_URL}/v2/schema?guid={SCHEMA_GUID}",
-                headers=HEADER,
-            )
-        else:
-            pass
+        return test_method
 
-    # Test dataset metadata endpoint
-    @task
-    def http_get_sds_dataset_metadata_v1(self):
-        """Performance test task for the `http_get_sds_dataset_metadata_v1` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_dataset_metadata")
-        ):
-            self.client.get(
-                f"{BASE_URL}/v1/dataset_metadata?survey_id={LOCUST_TEST_ID}&period_id={LOCUST_TEST_ID}",
-                headers=HEADER,
-            )
-        else:
-            pass
+    locust_test_methods.append(create_test_method(endpoint_name))
 
-    # Test unit data endpoint
-    @task
-    def http_get_sds_unit_data(self):
-        """Performance test task for the `http_get_sds_unit_data` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_unit_data")
-        ):
-            self.endpoint_helpers.send_request(
-                client = self.client,
-                endpoint_name = GET_UNIT_DATA,
-                params = {
-                    "dataset_id": config.DATASET_ID,
-                    "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
-                },
-                headers = config.HEADER,
-            )
-
-        else:
-            pass
-
-    # Test get survey list endpoint
-    @task
-    def http_get_sds_survey_list_v1(self):
-        """Performance test task for the `http_get_sds_survey_list_v1` function"""
-        if (
-            self.environment.parsed_options.test_endpoints in ("all", "get_survey_list")
-        ):
-            self.client.get(f"{BASE_URL}/v1/survey_list", headers=HEADER)
-        else:
-            pass
+# Add the created test methods to the tasks attribute of the PerformanceTests class
+PerformanceTests.tasks = locust_test_methods
