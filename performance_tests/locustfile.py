@@ -12,6 +12,7 @@ from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
 from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_ENDPOINTS_DEFAULT
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
+from locust_tests_factory import LocustTestsFactory
 
 # Set up logging
 
@@ -121,40 +122,17 @@ class PerformanceTests(FastHttpUser):
     tasks = []
     host = config.BASE_URL
     endpoint_helpers: EndpointsHelpers
+    locust_tests_factory: LocustTestsFactory
 
     def __init__(self, *args, **kwargs):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
         self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, SDS_ENDPOINTS)
+        self.locust_tests_factory = LocustTestsFactory(SDS_ENDPOINTS)
+        self.tasks = self.locust_tests_factory.populate_locust_tasks(runtime_config)
 
     def on_start(self):
         super().on_start()
 
     def on_stop(self):
         super().on_stop()
-
-
-# Test creating dynamic tasks based on the chosen endpoints - example with get unit data endpoint
-locust_test_methods = []
-for endpoint_name in SDS_ENDPOINTS.keys():
-    logger.info(f"Creating dynamic test method for endpoint: {endpoint_name}")
-    # Closure function to create a test method for an endpoint
-    def create_test_method(endpoint):
-        def test_method(user):
-            selected_endpoints = user.environment.parsed_options.test_endpoints
-
-            if selected_endpoints not in ("all", endpoint):
-                pass
-            else:
-                user.endpoint_helpers.send_request(
-                    client=user.client,
-                    endpoint_name=endpoint,
-                    runtime_config=runtime_config,
-                )
-
-        return test_method
-
-    locust_test_methods.append(create_test_method(endpoint_name))
-
-# Add the created test methods to the tasks attribute of the PerformanceTests class
-PerformanceTests.tasks = locust_test_methods
