@@ -1,18 +1,17 @@
 import datetime
 import logging
 import os
-from http import HTTPStatus
 
 from configs.config import config
-from json_generator import JsonGenerator
 from locust import FastHttpUser, between, events
 from locust.runners import MasterRunner
 from locust_helper import LocustHelper
-from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
-from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_ENDPOINTS_DEFAULT
+from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_ENDPOINTS_DEFAULT, EndpointConfig
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
 from locust_tests_factory import LocustTestsFactory
+from preprocess.preprocess_sds_schema import PreProcessSDSSchema
+from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
 
 # Set up logging
 
@@ -29,8 +28,7 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
     os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
 # Initialize LocustHelper class
-DATABASE_NAME = f"{config.PROJECT_ID}-{config.DATABASE}"
-locust_helper = LocustHelper(config.BASE_URL, DATABASE_NAME, LOCUST_TEST_ID)
+locust_helper = LocustHelper(config.BASE_URL, config.DATABASE_NAME, config.TEST_SURVEY_ID)
 
 
 @events.init_command_line_parser.add_listener
@@ -53,47 +51,6 @@ def _(parser):
     )
 
 
-def run_master_test_start_process(header, environment):
-    # Generate dataset file
-    response = locust_helper.get_dataset_metadata(header)
-
-    if response.status_code == HTTPStatus.NOT_FOUND:
-        logger.info("Generating dataset file...")
-
-        json_generator = JsonGenerator(
-            LOCUST_TEST_ID,
-            config.TEST_DATASET_FILE,
-            FIXED_IDENTIFIERS,
-        )
-
-        json_generator.generate_dataset_file(environment.parsed_options.dataset_entries)
-
-        # Publish 1 dataset for endpoint testing
-        logger.info("Publishing SDS dataset for testing...")
-        locust_helper.create_dataset_record_before_test(config.TEST_DATASET_FILE)
-
-    # Publish 1 schema for endpoint testing
-    response = locust_helper.get_schema_metadata(header)
-
-    if response.status_code == HTTPStatus.NOT_FOUND:
-        logger.info("Publishing SDS schema for testing...")
-        schema_payload = locust_helper.load_json(config.TEST_SCHEMA_FILE)
-        locust_helper.create_schema_record_before_test(header, schema_payload)
-
-
-def run_worker_test_start_process(header):
-    # Get schema guid
-    logger.info("Retrieving schema GUID")
-    runtime_config.SCHEMA_GUID = locust_helper.wait_and_get_schema_guid(header)
-    logger.info(f"Test schema GUID: {runtime_config.SCHEMA_GUID}")
-
-    # Get dataset ID
-    logger.info("Retrieving dataset ID")
-    runtime_config.DATASET_ID = locust_helper.get_dataset_id(header, config.TEST_DATASET_FILE)
-    logger.info(f"Test dataset ID: {runtime_config.DATASET_ID}")
-
-    logger.info("Preparation for testing is complete. Test will be starting")
-
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
@@ -103,32 +60,54 @@ def on_test_start(environment, **kwargs):
     logger.info("Setting header for requests")
     runtime_config.HEADER = locust_helper.set_header()
 
+    preprocessor_sds_dataset = PreProcessSDSDataset(runtime_config.HEADER, environment)
+    preprocessor_sds_schema = PreProcessSDSSchema(runtime_config.HEADER, environment)
+
+    preprocessors_required = [preprocessor_sds_schema, preprocessor_sds_dataset]
+
     if os.environ.get("LOCUST_HEADLESS") == "true":
         if not isinstance(environment.runner, MasterRunner):
             # Worker Node operation
-            run_worker_test_start_process(runtime_config.HEADER)
+            for preprocessor in preprocessors_required:
+                preprocessor.preprocess_worker()
+
+            runtime_config.DATASET_ID = preprocessor_sds_dataset.get_dataset_id()
+            runtime_config.SCHEMA_GUID = preprocessor_sds_schema.get_schema_guid()
 
         else:
             # Master Node operation
-            run_master_test_start_process(runtime_config.HEADER, environment)
+            for preprocessor in preprocessors_required:
+                preprocessor.preprocess_master()
 
     else:
-        run_master_test_start_process(runtime_config.HEADER, environment)
-        run_worker_test_start_process(runtime_config.HEADER)
+        for preprocessor in preprocessors_required:
+            preprocessor.preprocess_master()
+            preprocessor.preprocess_worker()
+
+        runtime_config.DATASET_ID = preprocessor_sds_dataset.get_dataset_id()
+        runtime_config.SCHEMA_GUID = preprocessor_sds_schema.get_schema_guid()
 
 
 class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
-    tasks = []
-    host = config.BASE_URL
+    tasks = [] # Tasks will be populated dynamically at init
+    host = config.BASE_URL # Required by Locust
+    endpoint_configs: dict[str, EndpointConfig] # Endpoint configurations for the selected endpoints to be tested
     endpoint_helpers: EndpointsHelpers
     locust_tests_factory: LocustTestsFactory
 
     def __init__(self, *args, **kwargs):
         """Override default init to save some additional class attributes"""
         super().__init__(*args, **kwargs)
+
+        # Define endpoints to be tested
         self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, SDS_ENDPOINTS)
-        self.locust_tests_factory = LocustTestsFactory(SDS_ENDPOINTS)
+        self.endpoint_configs = self.endpoint_helpers.get_endpoint_configs_from_selection(
+            [self.environment.parsed_options.test_endpoints]
+        )
+
+        # Populate tasks
+        self.locust_tests_factory = LocustTestsFactory(self.endpoint_configs)
         self.tasks = self.locust_tests_factory.populate_locust_tasks(runtime_config)
 
     def on_start(self):

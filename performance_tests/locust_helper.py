@@ -34,23 +34,8 @@ class LocustHelper:
         }
 
 
-    # Delete all documents in a bucket folder
-    def delete_docs(self, survey_id: str, bucket_name: str) -> None:
-        """
-        Deletes firestore documents
-
-        Args:
-            survey_id (str): the survey id
-            bucket_name (str): the name of the bucket
-        """
-        storage_bucket = self.get_bucket(bucket_name)
-        blobs = storage_bucket.list_blobs(prefix=survey_id)
-
-        for blob in blobs:
-            blob.delete()
-
     # Create a schema record before testing
-    def create_schema_record_before_test(self, headers: dict, payload: dict) -> str:
+    def create_schema_record_before_test(self, headers: dict, payload: dict) -> int:
         """Creates schema for testing purposes
 
         Args:
@@ -61,52 +46,18 @@ class LocustHelper:
             str: schema guid
 
         """
-        try:
-            response = requests.post(
-                f"{self.base_url}/v1/schema?survey_id={self.locust_test_id}",
-                headers=headers,
-                json=payload,
-                timeout=60,
-            )
-            json_response = response.json()
-            return json_response["guid"]
-        except Exception as e:
-            logging.error(f"Locust on start: Error spinning up schema for testing: {e}")
-            raise RuntimeError(
-                f"Locust on start: Error spinning up schema for testing: {e}"
-            ) from e
+        response = requests.post(
+            f"{self.base_url}/v1/schema?survey_id={self.locust_test_id}",
+            headers=headers,
+            json=payload,
+            timeout=60,
+        )
 
-    # Create a dataset record before testing
-    def create_dataset_record_before_test(self, file: str) -> None:
-        """Creates dataset for testing purposes
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f"Error creating schema record. Status code: {response.status_code}")
+            return -1
 
-        Args:
-            file (str): path to the dataset file
-
-        """
-        try:
-            logger.info("Cleaning up dataset bucket...")
-            self.delete_all_files_from_bucket(
-                f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-            )
-            logger.info("Uploading file to bucket...")
-            self.upload_file_to_bucket(
-                file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-            )
-            logger.info("Wait and check if file is uploaded...")
-            self.wait_and_check_file_is_uploaded(
-                file, f"{config.PROJECT_ID}-sds-europe-west2-dataset"
-            )
-            logger.info("Force running schedule job to publish dataset...")
-            self.force_run_schedule_job()
-
-        except Exception as e:
-            logging.error(
-                f"Locust on start: Error spinning up dataset for testing: {e}"
-            )
-            raise RuntimeError(
-                f"Locust on start: Error spinning up dataset for testing: {e}"
-            ) from e
+        return 1
 
     # Get bucket from SDS
     def get_bucket(self, bucket_name: str) -> Bucket | None:
@@ -118,16 +69,20 @@ class LocustHelper:
         """
         storage_client = storage.Client()
         try:
-            bucket = storage_client.bucket(
+            bucket = storage_client.get_bucket(
                 bucket_name,
             )
             return bucket
+
         except exceptions.NotFound as exc:
-            logging.error(f"Error getting bucket: {bucket_name}.")
-            raise RuntimeError(f"Error getting bucket: {bucket_name}.") from exc
+            logging.error(f"Error. Bucket not found: {bucket_name}.")
+            return None
+        except Exception as e:
+            logging.error(f"Error getting bucket: {bucket_name}. Error: {e}")
+            return None
 
     # Upload a file to SDS bucket
-    def upload_file_to_bucket(self, file: str, bucket_name: str) -> None:
+    def upload_file_to_bucket(self, file: str, bucket_name: str) -> int:
         """
         Uploads a file to the specified bucket.
 
@@ -137,17 +92,23 @@ class LocustHelper:
 
         """
         storage_bucket = self.get_bucket(bucket_name)
+
+        if storage_bucket is None:
+            return -1
+
         try:
             blob = storage_bucket.blob(file)
             blob.upload_from_filename(
                 filename=file,
                 content_type="application/json",
             )
+
+            return 1
         except exceptions as exc:
             logging.error(f"Error uploading file {file}.")
-            raise RuntimeError(f"Error uploading file {file}.") from exc
+            return -1
 
-    def wait_and_check_file_is_uploaded(self, file: str, bucket_name: str) -> None:
+    def wait_and_check_file_is_uploaded(self, file: str, bucket_name: str) -> int:
         """
         Wait and check if the file is uploaded to the bucket
 
@@ -171,42 +132,30 @@ class LocustHelper:
 
             if count > 0:
                 logger.debug("File found...")
-                return
+                return 1
 
             attempts -= 1
             time.sleep(backoff)
             backoff += backoff
 
-        raise RuntimeError(f"Error uploading file {file}.")
-
-    # Get dataset id from spin up dataset
-    def get_dataset_id(self, headers: dict, filename: str) -> str:
-        """
-        Get dataset id from the dataset.json file
-
-        Args:
-            headers (dict): the headers for the request
-            filename (str): the name of the file
-
-        Returns:
-            str: the dataset id
-        """
-        return self.wait_and_get_dataset_id(headers, filename)
+        return -1
 
     # Wait and get dataset id from SDS
     def wait_and_get_dataset_id(
         self,
         headers: dict,
-        filename: str,
+        survey_id: str,
+        period_id: str,
         attempts: int = 10,
         backoff: int = 0.25,
-    ) -> str:
+    ) -> str | None:
         """
         Wait and get dataset id from SDS
 
         Args:
             headers (dict): the headers for the request
-            filename (str): the name of the file
+            survey_id (str): the survey id
+            period_id (str): the period id
             attempts (int): the number of attempts to make
             backoff (int): the backoff time
 
@@ -214,7 +163,7 @@ class LocustHelper:
             str: the dataset id
         """
         while attempts != 0:
-            response = self.get_dataset_metadata(headers)
+            response = self.get_dataset_metadata(headers, survey_id, period_id)
 
             if response.status_code == HTTPStatus.OK:
                 for dataset_metadata in response.json():
@@ -224,7 +173,8 @@ class LocustHelper:
             time.sleep(backoff)
             backoff += backoff
 
-        raise RuntimeError(f"Error getting dataset id using filename: {filename}.")
+        logger.error(f"Error getting dataset id using survey_id: {survey_id} and period_id: {period_id}.")
+        return None
 
     def load_json(self, filepath: str) -> dict:
         """
@@ -253,7 +203,7 @@ class LocustHelper:
             ]
         )
 
-    def delete_all_files_from_bucket(self, bucket_name: str) -> None:
+    def delete_all_files_from_bucket(self, bucket_name: str) -> int:
         """
         Method to delete all files from the specified bucket.
 
@@ -264,23 +214,31 @@ class LocustHelper:
             None
         """
         storage_bucket = self.get_bucket(bucket_name)
+
+        if not storage_bucket:
+            return -1
+
         blobs = storage_bucket.list_blobs()
 
         for blob in blobs:
             blob.delete()
 
+        return 1
+
     # Wait and get schema guid from SDS
     def wait_and_get_schema_guid(
         self,
         headers: dict,
+        survey_id: str,
         attempts: int = 10,
         backoff: int = 0.25,
-    ) -> str:
+    ) -> str | None:
         """
         Wait and get schema guid from SDS
 
         Args:
             headers (dict): the headers for the request
+            survey_id (str): the survey id
             attempts (int): the number of attempts to make
             backoff (int): the backoff time
 
@@ -288,7 +246,7 @@ class LocustHelper:
             str: the schema guid
         """
         while attempts != 0:
-            response = self.get_schema_metadata(headers)
+            response = self.get_schema_metadata(headers, survey_id)
 
             if response.status_code == HTTPStatus.OK:
                 for schema_metadata in response.json():
@@ -298,11 +256,13 @@ class LocustHelper:
             time.sleep(backoff)
             backoff += backoff
 
-        raise RuntimeError("Error getting schema guid")
+        logger.error(f"Error getting schema guid using survey_id: {survey_id}.")
+        return None
 
     def get_schema_metadata(
         self,
         headers: dict,
+        survey_id: str,
     ) -> requests.Response:
         """
         Get schema metadata from db
@@ -311,7 +271,7 @@ class LocustHelper:
             response: the response from the API
         """
         response = requests.get(
-            f"{self.base_url}/v1/schema_metadata?survey_id={self.locust_test_id}",
+            f"{self.base_url}/v1/schema_metadata?survey_id={survey_id}",
             headers=headers,
             timeout=60,
         )
@@ -321,6 +281,8 @@ class LocustHelper:
     def get_dataset_metadata(
         self,
         headers: dict,
+        survey_id: str,
+        period_id: str,
     ) -> requests.Response:
         """
         Get dataset metadata from db
@@ -329,7 +291,7 @@ class LocustHelper:
             response: the response from the API
         """
         response = requests.get(
-            f"{self.base_url}/v1/dataset_metadata?survey_id={self.locust_test_id}&period_id={self.locust_test_id}",
+            f"{self.base_url}/v1/dataset_metadata?survey_id={survey_id}&period_id={period_id}",
             headers=headers,
             timeout=60,
         )

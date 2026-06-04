@@ -11,8 +11,8 @@ class App(StrEnum):
 
 
 class Config:
-    APP: App = get_value_from_env("APP", "sds")
-    BASE_URL = get_value_from_env("BASE_URL", "http://127.0.0.1:3033")
+    APP: App = get_value_from_env("APP", "sds") # Can be set to "sds" or "cir" to specify which application to test
+    BASE_URL = get_value_from_env("BASE_URL", "http://127.0.0.1:3033") # Base URL for the application under test. Require https://
     PROJECT_ID = get_value_from_env("PROJECT_ID", "ons-sds-sandbox-01")
     TEST_SCHEMA_FILE = "test_schema/schema.json"
     TEST_DATASET_FILE = "test_dataset/generated_data.json"
@@ -23,6 +23,7 @@ class Config:
         "default",
     )
     DATABASE = get_value_from_env("DATABASE", "sds")
+    DATABASE_NAME = f"{PROJECT_ID}-{DATABASE}"
     TEST_UNIT_DATA_IDENTIFIER = FIXED_IDENTIFIERS[0]
     TEST_SURVEY_ID = LOCUST_TEST_ID
     TEST_PERIOD_ID = LOCUST_TEST_ID

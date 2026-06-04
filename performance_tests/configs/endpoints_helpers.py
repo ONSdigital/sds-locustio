@@ -24,6 +24,13 @@ class EndpointsHelpers:
         """Get the parameters for a given endpoint name"""
         return self.endpoints[endpoint_name].get("params")
 
+    def get_endpoint_configs_from_selection(self, selected_endpoints: list[str]) -> dict[str, EndpointConfig]:
+        """Get the endpoints config for the selected endpoints"""
+        if "all" in selected_endpoints:
+            return self.endpoints
+
+        return {endpoint: config for endpoint, config in self.endpoints.items() if endpoint in selected_endpoints}
+
     def generate_full_url(self, endpoint_name: str, params: dict[str, str] | None) -> str:
         """Generate the URL-encoded parameters for a given endpoint name and parameters"""
         url = self.get_endpoint_url(endpoint_name)

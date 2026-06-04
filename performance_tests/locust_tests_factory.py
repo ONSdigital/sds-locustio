@@ -7,12 +7,12 @@ logger = logging.getLogger(__name__)
 
 
 class LocustTestsFactory:
-    def __init__(self, endpoints_list: dict[str, EndpointConfig]):
-        self.endpoints_list = endpoints_list
+    def __init__(self, endpoint_configs: dict[str, EndpointConfig]):
+        self.endpoint_configs = endpoint_configs
 
     def populate_locust_tasks(self, runtime_config: RuntimeConfig) -> list:
         locust_tasks = []
-        for endpoint_name in self.endpoints_list.keys():
+        for endpoint_name in self.endpoint_configs.keys():
             logger.info(f"Creating dynamic test method for endpoint: {endpoint_name}")
 
             # Closure function to create a test method for an endpoint

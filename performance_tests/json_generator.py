@@ -23,7 +23,7 @@ class JsonGenerator:
         self.fixed_identifiers = fixed_identifiers
         self.unit_data_from_str = None
 
-    def generate_dataset_file(self, dataset_entries: int) -> None:
+    def generate_dataset_file(self, dataset_entries: int) -> int:
         """
         Generate the dataset file.
         """
@@ -41,8 +41,11 @@ class JsonGenerator:
                     json.dump(json_data, json_file, indent=2)
 
                 logging.info(f"Data successfully written to {self.file_name}")
+
+            return 0
         except Exception as e:
             logging.error(f"Error generating dataset file: {e}")
+            return -1
 
 
     def _generate_json_data(
