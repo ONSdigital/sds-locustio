@@ -22,10 +22,9 @@ class Config:
         "OAUTH_CLIENT_ID",
         "default",
     )
-    DATABASE = get_value_from_env("DATABASE", "sds")
-    DATABASE_NAME = f"{PROJECT_ID}-{DATABASE}"
     TEST_UNIT_DATA_IDENTIFIER = FIXED_IDENTIFIERS[0]
     TEST_SURVEY_ID = LOCUST_TEST_ID
     TEST_PERIOD_ID = LOCUST_TEST_ID
+    TEST_CI_GUID = LOCUST_TEST_ID
 
 config = Config()

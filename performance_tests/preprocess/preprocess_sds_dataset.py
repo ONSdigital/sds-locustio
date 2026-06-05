@@ -21,7 +21,7 @@ class PreProcessSDSDataset(PreProcessBase):
 
     def preprocess_master(self) -> int:
 
-        response = self.locust_helper.get_dataset_metadata(
+        response = self.locust_helper.get_sds_dataset_metadata(
             self.header, config.BASE_URL, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID
         )
 
@@ -79,7 +79,7 @@ class PreProcessSDSDataset(PreProcessBase):
 
         self.logger.info(f"Retrieving dataset ID via SDS Dataset preprocessor on worker {worker_index}")
 
-        dataset_id = self.locust_helper.wait_and_get_dataset_id(
+        dataset_id = self.locust_helper.wait_and_get_sds_dataset_id(
             self.header, config.BASE_URL, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID
         )
 

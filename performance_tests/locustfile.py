@@ -10,8 +10,7 @@ from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_EN
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
 from locust_tests_factory import LocustTestsFactory
-from preprocess.preprocess_sds_schema import PreProcessSDSSchema
-from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
+from preprocess.preprocess_mapper import PreprocessMapper
 
 # Set up logging
 
@@ -59,19 +58,21 @@ def on_test_start(environment, **kwargs):
     logger.info("Setting header for requests")
     runtime_config.HEADER = locust_helper.set_header()
 
-    preprocessor_sds_dataset = PreProcessSDSDataset(runtime_config.HEADER, environment)
-    preprocessor_sds_schema = PreProcessSDSSchema(runtime_config.HEADER, environment)
+    preprocess_mapper = PreprocessMapper()
 
-    preprocessors_required = [preprocessor_sds_schema, preprocessor_sds_dataset]
+    preprocessors_required = preprocess_mapper.initiate_preprocessors(
+        header=runtime_config.HEADER,
+        environment=environment
+    )
 
     if os.environ.get("LOCUST_HEADLESS") == "true":
+        # Headless mode
         if not isinstance(environment.runner, MasterRunner):
             # Worker Node operation
             for preprocessor in preprocessors_required:
                 preprocessor.preprocess_worker()
 
-            runtime_config.DATASET_ID = preprocessor_sds_dataset.get_dataset_id()
-            runtime_config.SCHEMA_GUID = preprocessor_sds_schema.get_schema_guid()
+            runtime_config.set_config_from_preprocessors(preprocessors_required)
 
         else:
             # Master Node operation
@@ -79,12 +80,12 @@ def on_test_start(environment, **kwargs):
                 preprocessor.preprocess_master()
 
     else:
+        # Non-headless mode - run both master and worker operations in the same process
         for preprocessor in preprocessors_required:
             preprocessor.preprocess_master()
             preprocessor.preprocess_worker()
 
-        runtime_config.DATASET_ID = preprocessor_sds_dataset.get_dataset_id()
-        runtime_config.SCHEMA_GUID = preprocessor_sds_schema.get_schema_guid()
+        runtime_config.set_config_from_preprocessors(preprocessors_required)
 
 
 class PerformanceTests(FastHttpUser):

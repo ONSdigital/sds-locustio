@@ -15,8 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class LocustHelper:
+    sds_post_schema_url: str = "/v1/schema"
+    sds_get_dataset_metadata_url: str = "/v1/dataset_metadata"
+    sds_get_schema_metadata_url: str = "/v1/schema_metadata"
+
     # Token expiry time is 1 hour and that will be the max time for the test at the moment
-    def set_header(self) -> dict:
+    @staticmethod
+    def set_header() -> dict:
         """Set header for SDS requests"""
         auth_req = google.auth.transport.requests.Request()
         auth_token = google.oauth2.id_token.fetch_id_token(
@@ -28,10 +33,10 @@ class LocustHelper:
             "Content-Type": "application/json",
         }
 
-    # Get bucket from SDS
-    def get_bucket(self, bucket_name: str) -> Bucket | None:
+    @staticmethod
+    def get_bucket(bucket_name: str) -> Bucket | None:
         """
-        Get bucket from SDS
+        Get bucket
 
         Args:
             bucket_name (str): the name of the bucket
@@ -110,7 +115,7 @@ class LocustHelper:
         return -1
 
     # Wait and get dataset id from SDS
-    def wait_and_get_dataset_id(
+    def wait_and_get_sds_dataset_id(
         self,
         headers: dict,
         base_url: str,
@@ -134,7 +139,7 @@ class LocustHelper:
             str: the dataset id
         """
         while attempts != 0:
-            response = self.get_dataset_metadata(headers, base_url, survey_id, period_id)
+            response = self.get_sds_dataset_metadata(headers, base_url, survey_id, period_id)
 
             if response.status_code == HTTPStatus.OK:
                 for dataset_metadata in response.json():
@@ -199,7 +204,7 @@ class LocustHelper:
         return 1
 
     # Wait and get schema guid from SDS
-    def wait_and_get_schema_guid(
+    def wait_and_get_sds_schema_guid(
         self,
         headers: dict,
         base_url: str,
@@ -221,7 +226,7 @@ class LocustHelper:
             str: the schema guid
         """
         while attempts != 0:
-            response = self.get_schema_metadata(headers, base_url, survey_id)
+            response = self.get_sds_schema_metadata(headers, base_url, survey_id)
 
             if response.status_code == HTTPStatus.OK:
                 for schema_metadata in response.json():
@@ -234,8 +239,8 @@ class LocustHelper:
         logger.error(f"Error getting schema guid using survey_id: {survey_id}.")
         return None
 
-    @staticmethod
-    def get_schema_metadata(
+    def get_sds_schema_metadata(
+        self,
         headers: dict,
         base_url: str,
         survey_id: str,
@@ -247,15 +252,15 @@ class LocustHelper:
             response: the response from the API
         """
         response = requests.get(
-            f"{base_url}/v1/schema_metadata?survey_id={survey_id}",
+            f"{base_url}{self.sds_get_schema_metadata_url}?survey_id={survey_id}",
             headers=headers,
             timeout=60,
         )
 
         return response
 
-    @staticmethod
-    def get_dataset_metadata(
+    def get_sds_dataset_metadata(
+        self,
         headers: dict,
         base_url: str,
         survey_id: str,
@@ -268,15 +273,15 @@ class LocustHelper:
             response: the response from the API
         """
         response = requests.get(
-            f"{base_url}/v1/dataset_metadata?survey_id={survey_id}&period_id={period_id}",
+            f"{base_url}{self.sds_get_dataset_metadata_url}?survey_id={survey_id}&period_id={period_id}",
             headers=headers,
             timeout=60,
         )
 
         return response
 
-    @staticmethod
-    def create_schema_record_before_test(
+    def create_sds_schema_record_before_test(
+            self,
             headers: dict,
             base_url: str,
             survey_id: str,
@@ -295,7 +300,7 @@ class LocustHelper:
 
         """
         response = requests.post(
-            f"{base_url}/v1/schema?survey_id={survey_id}",
+            f"{base_url}{self.sds_post_schema_url}?survey_id={survey_id}",
             headers=headers,
             json=payload,
             timeout=60,
