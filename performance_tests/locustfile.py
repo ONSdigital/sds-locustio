@@ -2,11 +2,12 @@ import datetime
 import logging
 import os
 
-from configs.config import config
+from configs.config import config, App
 from locust import FastHttpUser, between, events
 from locust.runners import MasterRunner
 from locust_helper import LocustHelper
-from configs.endpoints_config import SDS_ENDPOINTS, SDS_ENDPOINTS_CHOICE, SDS_ENDPOINTS_DEFAULT, EndpointConfig
+from configs.endpoints_config import (SDS_ENDPOINTS, CIR_ENDPOINTS, SDS_ENDPOINTS_CHOICE, CIR_ENDPOINTS_CHOICE,
+                                      SDS_ENDPOINTS_DEFAULT, CIR_ENDPOINTS_DEFAULT, EndpointConfig)
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
 from locust_tests_factory import LocustTestsFactory
@@ -29,6 +30,15 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
 # Initialize LocustHelper class
 locust_helper = LocustHelper()
 
+if config.APP == App.SDS:
+    TEST_ENDPOINTS = SDS_ENDPOINTS
+    TEST_ENDPOINTS_CHOICE = SDS_ENDPOINTS_CHOICE
+    TEST_ENDPOINTS_DEFAULT = SDS_ENDPOINTS_DEFAULT
+elif config.APP == App.CIR:
+    TEST_ENDPOINTS = CIR_ENDPOINTS
+    TEST_ENDPOINTS_CHOICE = CIR_ENDPOINTS_CHOICE
+    TEST_ENDPOINTS_DEFAULT = CIR_ENDPOINTS_DEFAULT
+
 
 @events.init_command_line_parser.add_listener
 def _(parser):
@@ -37,17 +47,18 @@ def _(parser):
         "--test-endpoints",
         type=str,
         env_var="LOCUST_TEST_ENDPOINTS",
-        choices= SDS_ENDPOINTS_CHOICE,
-        default=SDS_ENDPOINTS_DEFAULT,
+        choices= TEST_ENDPOINTS_CHOICE,
+        default=TEST_ENDPOINTS_DEFAULT,
         help="Choose endpoints to test",
     )
-    parser.add_argument(
-        "--dataset_entries",
-        type=int,
-        env_var="LOCUST_DATASET_ENTRIES",
-        default=1000,
-        help="Number of unit data in the generated dataset between 10 to 90000",
-    )
+    if config.APP == App.SDS:
+        parser.add_argument(
+            "--dataset_entries",
+            type=int,
+            env_var="LOCUST_DATASET_ENTRIES",
+            default=1000,
+            help="Number of unit data in the generated dataset between 10 to 90000",
+        )
 
 
 @events.test_start.add_listener
@@ -101,7 +112,7 @@ class PerformanceTests(FastHttpUser):
         super().__init__(*args, **kwargs)
 
         # Define endpoints to be tested
-        self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, SDS_ENDPOINTS)
+        self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, TEST_ENDPOINTS)
         self.endpoint_configs = self.endpoint_helpers.get_endpoint_configs_from_selection(
             [self.environment.parsed_options.test_endpoints]
         )

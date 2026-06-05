@@ -83,27 +83,27 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_CI_METADATA: {
         "url": "/collection-instruments/metadata",
         "method": "GET",
-        "params": None,
+        "params": {
+            "survey_id": config.TEST_SURVEY_ID,
+            "language": config.TEST_CI_LANGUAGE,
+            "classifier_type": config.TEST_CI_CLASSIFIER_TYPE,
+            "classifier_value": config.TEST_CI_CLASSIFIER_VALUE,
+        },
     },
     GET_CI_SCHEMA: {
         "url": "/collection-instruments/schema",
         "method": "GET",
-        "params": None,
-    },
-    GET_CI_VALIDATOR_METADATA: {
-        "url": "/collection-instruments/validator-metadata",
-        "method": "GET",
-        "params": None,
-    },
-    POST_CI: {
-        "url": "/collection-instruments",
-        "method": "POST",
-        "params": None,
+        "params": {
+            "guid": config.TEST_CI_GUID,
+        },
     },
     PUT_VALIDATOR_VERSION: {
         "url": "/collection-instruments/validator-version",
         "method": "PUT",
-        "params": None,
+        "params": {
+            "guid": config.TEST_CI_GUID,
+            "validator_version": config.TEST_CI_VALIDATOR_VERSION,
+        },
     },
 }
 
@@ -111,3 +111,4 @@ SDS_ENDPOINTS_CHOICE: list = ["all"] + list(SDS_ENDPOINTS.keys())
 CIR_ENDPOINTS_CHOICE: list = ["all"] + list(CIR_ENDPOINTS.keys())
 
 SDS_ENDPOINTS_DEFAULT: str = GET_UNIT_DATA
+CIR_ENDPOINTS_DEFAULT: str = GET_CI_METADATA
