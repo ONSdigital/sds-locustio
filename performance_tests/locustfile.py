@@ -28,7 +28,7 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
     os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
 # Initialize LocustHelper class
-locust_helper = LocustHelper(config.BASE_URL, config.DATABASE_NAME, config.TEST_SURVEY_ID)
+locust_helper = LocustHelper()
 
 
 @events.init_command_line_parser.add_listener
@@ -49,7 +49,6 @@ def _(parser):
         default=1000,
         help="Number of unit data in the generated dataset between 10 to 90000",
     )
-
 
 
 @events.test_start.add_listener

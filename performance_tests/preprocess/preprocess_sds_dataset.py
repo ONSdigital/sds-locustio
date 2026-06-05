@@ -17,15 +17,14 @@ class PreProcessSDSDataset(PreProcessBase):
         self.header = header
         self.environment = environment
         self.worker_index = environment.runner.worker_index if isinstance(environment.runner, WorkerRunner) else None
-        self.locust_helper = LocustHelper(
-            config.BASE_URL,
-            config.DATABASE_NAME,
-            config.TEST_SURVEY_ID
-        )
+        self.locust_helper = LocustHelper()
 
     def preprocess_master(self) -> int:
 
-        response = self.locust_helper.get_dataset_metadata(self.header, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID)
+        response = self.locust_helper.get_dataset_metadata(
+            self.header, config.BASE_URL, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID
+        )
+
 
         if response.status_code == HTTPStatus.OK:
             return self.skip("Dataset already exists. Skipping dataset generation.")
@@ -81,7 +80,7 @@ class PreProcessSDSDataset(PreProcessBase):
         self.logger.info(f"Retrieving dataset ID via SDS Dataset preprocessor on worker {worker_index}")
 
         dataset_id = self.locust_helper.wait_and_get_dataset_id(
-            self.header, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID
+            self.header, config.BASE_URL, config.TEST_SURVEY_ID, config.TEST_PERIOD_ID
         )
 
         if not dataset_id:

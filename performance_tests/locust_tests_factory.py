@@ -13,7 +13,7 @@ class LocustTestsFactory:
     def populate_locust_tasks(self, runtime_config: RuntimeConfig) -> list:
         locust_tasks = []
         for endpoint_name in self.endpoint_configs.keys():
-            logger.info(f"Creating dynamic test method for endpoint: {endpoint_name}")
+            logger.info(f"Creating test method for endpoint: {endpoint_name}")
 
             # Closure function to create a test method for an endpoint
             def create_test_method(endpoint):

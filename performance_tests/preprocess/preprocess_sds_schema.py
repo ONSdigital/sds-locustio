@@ -14,14 +14,10 @@ class PreProcessSDSSchema(PreProcessBase):
         self.header = header
         self.environment = environment
         self.worker_index = environment.runner.worker_index if isinstance(environment.runner, WorkerRunner) else None
-        self.locust_helper = LocustHelper(
-            config.BASE_URL,
-            config.DATABASE_NAME,
-            config.TEST_SURVEY_ID
-        )
+        self.locust_helper = LocustHelper()
 
     def preprocess_master(self) -> int:
-        response = self.locust_helper.get_schema_metadata(self.header, config.TEST_SURVEY_ID)
+        response = self.locust_helper.get_schema_metadata(self.header, config.BASE_URL, config.TEST_SURVEY_ID)
 
         if response.status_code == HTTPStatus.OK:
             return self.skip("Schema already exists. Skipping schema publish.")
@@ -32,7 +28,12 @@ class PreProcessSDSSchema(PreProcessBase):
         self.logger.info("Publishing SDS schema for testing...")
 
         schema_payload = self.locust_helper.load_json(config.TEST_SCHEMA_FILE)
-        if self.locust_helper.create_schema_record_before_test(self.header, schema_payload) < 0:
+        if self.locust_helper.create_schema_record_before_test(
+                self.header,
+                config.BASE_URL,
+                config.TEST_SURVEY_ID,
+                schema_payload
+        ) < 0:
             return self.error("Error creating schema record")
 
         return self.success(
@@ -43,7 +44,7 @@ class PreProcessSDSSchema(PreProcessBase):
         worker_index = self.environment.runner.worker_index
 
         self.logger.info("Retrieving schema GUID")
-        schema_guid = self.locust_helper.wait_and_get_schema_guid(self.header, config.TEST_SURVEY_ID)
+        schema_guid = self.locust_helper.wait_and_get_schema_guid(self.header, config.BASE_URL, config.TEST_SURVEY_ID)
 
         if not schema_guid:
             return self.error(f"Schema guid cannot be retrieved on worker {worker_index}")
