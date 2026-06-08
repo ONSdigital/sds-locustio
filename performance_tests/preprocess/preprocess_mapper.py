@@ -4,6 +4,7 @@ from preprocess.preprocess_base import PreProcessBase
 
 from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
 from preprocess.preprocess_sds_schema import PreProcessSDSSchema
+from preprocess.preprocess_cir_schema import PreProcessCIRSchema
 
 
 class PreprocessMapper:
@@ -13,16 +14,17 @@ class PreprocessMapper:
         self.mapping_app = config.APP
 
     def initiate_preprocessors(self, header: dict, environment) -> list[PreProcessBase]:
-        preprocessors_list = []
         if self.mapping_app == App.SDS:
+            # For SDS, we need to preprocess both Schema and Dataset
             preprocessors_list = [PreProcessSDSSchema, PreProcessSDSDataset]
 
-            self.preprocessors = [preprocessor(header, environment) for preprocessor in preprocessors_list]
-
-            return self.preprocessors
-
         else:
-            return []
+            # For CIR, we only need to preprocess the CIR Schema
+            preprocessors_list = [PreProcessCIRSchema]
+
+        self.preprocessors = [preprocessor(header, environment) for preprocessor in preprocessors_list]
+
+        return self.preprocessors
 
     def get_preprocessors(self) -> list[PreProcessBase]:
         return self.preprocessors

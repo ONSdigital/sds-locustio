@@ -8,7 +8,9 @@ from preprocess.preprocess_base import PreProcessBase
 class EndpointConfig(TypedDict):
     url: str
     method: str
+    name: str | None # Group name, optional
     params: dict[str, str] | None
+    payload: str | None
 
 # SDS Endpoints
 
@@ -32,49 +34,64 @@ PUT_VALIDATOR_VERSION: str = "put_validator_version"
 DATASET_ID_PLACEHOLDER = "dataset_id_placeholder"
 SCHEMA_ID_PLACEHOLDER = "schema_guid_placeholder"
 
+# Runtime function placeholders
+VALIDATOR_VERSION_PLACEHOLDER = "validator_version_placeholder"
+
 
 SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SCHEMA_METADATA: {
         "url": "/v1/schema_metadata",
         "method": "GET",
+        "name": None,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
-        }
+        },
+        "payload": None,
     },
     GET_SCHEMA: {
         "url": "/v1/schema",
         "method": "GET",
+        "name": None,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
-        }
+        },
+        "payload": None,
     },
     GET_SCHEMA_V2: {
         "url": "/v2/schema",
         "method": "GET",
+        "name": None,
         "params": {
             "guid": SCHEMA_ID_PLACEHOLDER,
-        }
+        },
+        "payload": None,
     },
     GET_DATASET_METADATA: {
         "url": "/v1/dataset_metadata",
         "method": "GET",
+        "name": None,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "period_id": config.TEST_PERIOD_ID,
         },
+        "payload": None,
     },
     GET_UNIT_DATA: {
         "url": "/v1/unit_data",
         "method": "GET",
+        "name": None,
         "params": {
             "dataset_id": DATASET_ID_PLACEHOLDER,
             "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
         },
+        "payload": None,
     },
     GET_SURVEY_LIST: {
         "url": "/v1/survey_list",
         "method": "GET",
+        "name": None,
         "params": None,
+        "payload": None,
     }
 }
 
@@ -83,27 +100,33 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_CI_METADATA: {
         "url": "/collection-instruments/metadata",
         "method": "GET",
+        "name": None,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "language": config.TEST_CI_LANGUAGE,
             "classifier_type": config.TEST_CI_CLASSIFIER_TYPE,
             "classifier_value": config.TEST_CI_CLASSIFIER_VALUE,
         },
+        "payload": None,
     },
     GET_CI_SCHEMA: {
         "url": "/collection-instruments/schema",
         "method": "GET",
+        "name": None,
         "params": {
             "guid": config.TEST_CI_GUID,
         },
+        "payload": None,
     },
     PUT_VALIDATOR_VERSION: {
         "url": "/collection-instruments/validator-version",
         "method": "PUT",
+        "name": "/collection-instruments/validator-version?guid=[guid]&validator_version=[validator_version]",
         "params": {
             "guid": config.TEST_CI_GUID,
-            "validator_version": config.TEST_CI_VALIDATOR_VERSION,
+            "validator_version": VALIDATOR_VERSION_PLACEHOLDER,
         },
+        "payload": config.TEST_CI_SCHEMA_FILE,
     },
 }
 

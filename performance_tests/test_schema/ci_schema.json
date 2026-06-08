@@ -1,6 +1,6 @@
 {
   "data_version": "0.0.3",
-  "language": "en",
+  "language": "<locust_language>",
   "survey_id": "<locust_survey_id>",
   "title": "Test CI Schema",
   "form_type": "<locust_form_type>",

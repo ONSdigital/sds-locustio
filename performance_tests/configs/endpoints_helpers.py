@@ -1,10 +1,15 @@
+import random
 from urllib.parse import urlencode
 
 from locust.clients import ResponseContextManager
 from locust.contrib.fasthttp import FastHttpSession, FastResponse
 
-from configs.endpoints_config import EndpointConfig, DATASET_ID_PLACEHOLDER, SCHEMA_ID_PLACEHOLDER
+from configs.endpoints_config import EndpointConfig, DATASET_ID_PLACEHOLDER, SCHEMA_ID_PLACEHOLDER, VALIDATOR_VERSION_PLACEHOLDER
 from configs.runtime_config import RuntimeConfig
+
+from locust_helper import LocustHelper
+
+locust_helper = LocustHelper()
 
 
 class EndpointsHelpers:
@@ -23,6 +28,14 @@ class EndpointsHelpers:
     def get_endpoint_params(self, endpoint_name: str) -> dict[str, str] | None:
         """Get the parameters for a given endpoint name"""
         return self.endpoints[endpoint_name].get("params")
+
+    def get_endpoint_group_name(self, endpoint_name: str) -> str | None:
+        """Get the group name for a given endpoint name"""
+        return self.endpoints[endpoint_name].get("name")
+
+    def get_endpoint_payload(self, endpoint_name: str) -> str | None:
+        """Get the payload for a given endpoint name"""
+        return self.endpoints[endpoint_name].get("payload")
 
     def get_endpoint_configs_from_selection(self, selected_endpoints: list[str]) -> dict[str, EndpointConfig]:
         """Get the endpoints config for the selected endpoints"""
@@ -49,6 +62,8 @@ class EndpointsHelpers:
                 mapped_params[key] = runtime_config.DATASET_ID
             elif value == SCHEMA_ID_PLACEHOLDER:
                 mapped_params[key] = runtime_config.SCHEMA_GUID
+            elif value == VALIDATOR_VERSION_PLACEHOLDER:
+                mapped_params[key] = str(random.randint(0, 20)) + "." + str(random.randint(0, 20)) + "." + str(random.randint(0, 20))
             else:
                 mapped_params[key] = value
 
@@ -58,17 +73,17 @@ class EndpointsHelpers:
         """Send a request to the given URL using the specified HTTP method and headers"""
         method = self.get_endpoint_method(endpoint_name)
         params = self.get_endpoint_params(endpoint_name)
+        group_name = self.get_endpoint_group_name(endpoint_name)
         mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
         full_url = self.generate_full_url(endpoint_name, params=mapped_params)
 
-        if method == "GET":
-            return client.get(full_url, headers=runtime_config.HEADER)
-        elif method == "POST":
-            return client.post(full_url, headers=runtime_config.HEADER)
-        elif method == "PUT":
-            return client.put(full_url, headers=runtime_config.HEADER)
-        elif method == "DELETE":
-            return client.delete(full_url, headers=runtime_config.HEADER)
+        payload = self.get_endpoint_payload(endpoint_name)
+        if payload:
+            payload_json = locust_helper.load_json(payload)
+            payload = locust_helper.map_ci_schema_payload(payload_json)
+
+        if group_name:
+            return client.request(method=method, url=full_url, headers=runtime_config.HEADER, name=group_name, json=payload)
         else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
+            return client.request(method=method, url=full_url, headers=runtime_config.HEADER, json=payload)
 

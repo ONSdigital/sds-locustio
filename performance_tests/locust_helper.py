@@ -19,6 +19,13 @@ class LocustHelper:
     sds_get_dataset_metadata_url: str = "/v1/dataset_metadata"
     sds_get_schema_metadata_url: str = "/v1/schema_metadata"
 
+    cir_post_schema_url: str = "/collection-instruments"
+    cir_get_schema_metadata_url: str = "/collection-instruments/metadata"
+
+    cir_ci_survey_id_placeholder: str = "<locust_survey_id>"
+    cir_ci_form_type_placeholder: str = "<locust_form_type>"
+    cir_ci_language_placeholder: str = "<locust_language>"
+
     # Token expiry time is 1 hour and that will be the max time for the test at the moment
     @staticmethod
     def set_header() -> dict:
@@ -311,3 +318,128 @@ class LocustHelper:
             return -1
 
         return 1
+
+
+    def map_ci_schema_payload(self, payload: dict) -> dict:
+        """Maps the CI schema payload with the actual values
+
+        Returns:
+            dict: the mapped payload
+        """
+        # replace placeholders in payload with actual values
+        payload_str = json.dumps(payload)
+        payload_str = payload_str.replace(self.cir_ci_survey_id_placeholder, config.TEST_SURVEY_ID)
+        payload_str = payload_str.replace(self.cir_ci_form_type_placeholder, config.TEST_CI_CLASSIFIER_VALUE)
+        payload_str = payload_str.replace(self.cir_ci_language_placeholder, config.TEST_CI_LANGUAGE)
+        payload_mapped = json.loads(payload_str)
+
+        return payload_mapped
+
+
+    def create_cir_schema_record_before_test(
+            self,
+            headers: dict,
+            base_url: str,
+            guid: str,
+            validator_version: str,
+            payload: dict
+    ) -> int:
+        """Creates CI schema for testing purposes
+
+        Args:
+            headers (dict): the headers for the request
+            base_url (str): the base url for the request
+            guid (str): the guid for the CI schema
+            validator_version (str): the validator version for the CI schema
+            payload (json): json to be sent to API
+
+        Returns:
+            int: 1 if the CI schema record is created successfully, -1 otherwise
+        """
+        payload_mapped = self.map_ci_schema_payload(payload)
+
+        response = requests.post(
+            f"{base_url}{self.cir_post_schema_url}?guid={guid}&validator_version={validator_version}",
+            headers=headers,
+            json=payload_mapped,
+            timeout=60,
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f"Error creating CI schema record. Status code: {response.status_code}")
+            return -1
+
+        return 1
+
+
+    def get_cir_schema_metadata(
+        self,
+        headers: dict,
+        base_url: str,
+        classifier_type: str,
+        classifier_value: str,
+        language: str,
+        survey_id: str,
+    ) -> requests.Response:
+        """
+        Get CI schema metadata from db
+
+        Returns:
+            response: the response from the API
+        """
+        response = requests.get(
+            f"{base_url}{self.cir_get_schema_metadata_url}?classifier_type={classifier_type}&classifier_value={classifier_value}&language={language}&survey_id={survey_id}",
+            headers=headers,
+            timeout=60,
+        )
+
+        return response
+
+    # Wait and get schema guid from SDS
+    def wait_and_get_cir_schema_guid(
+            self,
+            headers: dict,
+            base_url: str,
+            classifier_type: str,
+            classifier_value: str,
+            language: str,
+            survey_id: str,
+            attempts: int = 10,
+            backoff: int = 0.25,
+    ) -> str | None:
+        """
+        Wait and get schema guid from SDS
+
+        Args:
+            headers (dict): the headers for the request
+            base_url (str): the base url for the request
+            classifier_type (str): the classifier type of the CI schema
+            classifier_value (str): the classifier value of the CI schema
+            language (str): the language of the CI schema
+            survey_id (str): the survey id
+            attempts (int): the number of attempts to make
+            backoff (int): the backoff time
+
+        Returns:
+            str: the schema guid
+        """
+        while attempts != 0:
+            response = self.get_cir_schema_metadata(
+                headers=headers,
+                base_url=base_url,
+                survey_id=survey_id,
+                classifier_type=classifier_type,
+                classifier_value=classifier_value,
+                language=language
+            )
+
+            if response.status_code == HTTPStatus.OK:
+                for schema_metadata in response.json():
+                    return schema_metadata["guid"]
+
+            attempts -= 1
+            time.sleep(backoff)
+            backoff += backoff
+
+        logger.error(f"Error getting CI schema guid using survey_id: {survey_id} form_type: {classifier_value} and language: {language}.")
+        return None
