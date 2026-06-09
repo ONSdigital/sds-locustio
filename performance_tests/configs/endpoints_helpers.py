@@ -9,6 +9,8 @@ from configs.runtime_config import RuntimeConfig
 
 from locust_helper import LocustHelper
 
+from configs.config import config
+
 locust_helper = LocustHelper()
 
 
@@ -73,17 +75,19 @@ class EndpointsHelpers:
         """Send a request to the given URL using the specified HTTP method and headers"""
         method = self.get_endpoint_method(endpoint_name)
         params = self.get_endpoint_params(endpoint_name)
+
         group_name = self.get_endpoint_group_name(endpoint_name)
+        if group_name:
+            group_name = f"{config.BASE_URL}{group_name}"
+
         mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
         full_url = self.generate_full_url(endpoint_name, params=mapped_params)
 
+        # Load and map payload if it exists for the endpoint
         payload = self.get_endpoint_payload(endpoint_name)
         if payload:
             payload_json = locust_helper.load_json(payload)
-            payload = locust_helper.map_ci_schema_payload(payload_json)
+            payload = locust_helper.map_schema_payload(payload_json)
 
-        if group_name:
-            return client.request(method=method, url=full_url, headers=runtime_config.HEADER, name=group_name, json=payload)
-        else:
-            return client.request(method=method, url=full_url, headers=runtime_config.HEADER, json=payload)
+        return client.request(method=method, url=full_url, headers=runtime_config.HEADER, name=group_name, json=payload)
 

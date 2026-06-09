@@ -6,11 +6,11 @@ from preprocess.preprocess_base import PreProcessBase
 
 
 class EndpointConfig(TypedDict):
-    url: str
-    method: str
-    name: str | None # Group name, optional
-    params: dict[str, str] | None
-    payload: str | None
+    url: str # URL path of the endpoint, excluding base URL
+    method: str # HTTP method (GET, POST, PUT, etc.)
+    name: str | None # Group name to group endpoint with different parameters calling into the same test method in result
+    params: dict[str, str] | None # URL parameters to be sent with the request, with optional placeholders for runtime values
+    payload: str | None # File path for the payload to be sent with the request, if applicable
 
 # SDS Endpoints
 

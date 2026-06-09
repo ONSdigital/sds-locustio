@@ -320,8 +320,8 @@ class LocustHelper:
         return 1
 
 
-    def map_ci_schema_payload(self, payload: dict) -> dict:
-        """Maps the CI schema payload with the actual values
+    def map_schema_payload(self, payload: dict) -> dict:
+        """Maps schema payload with the actual values
 
         Returns:
             dict: the mapped payload
@@ -356,7 +356,7 @@ class LocustHelper:
         Returns:
             int: 1 if the CI schema record is created successfully, -1 otherwise
         """
-        payload_mapped = self.map_ci_schema_payload(payload)
+        payload_mapped = self.map_schema_payload(payload)
 
         response = requests.post(
             f"{base_url}{self.cir_post_schema_url}?guid={guid}&validator_version={validator_version}",

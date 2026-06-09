@@ -2,6 +2,8 @@ PROJECT_ID = $(shell gcloud config get project)
 SDS_SANDBOX_IP_ADDRESS = $(shell gcloud compute addresses list --global  --filter=name:$(PROJECT_ID)-sds-static-lb-ip --format='value(address)' --limit=1 --project=$(PROJECT_ID))
 CIR_SANDBOX_IP_ADDRESS = $(shell gcloud compute addresses list --global  --filter=name:$(PROJECT_ID)-cir-static-lb-ip --format='value(address)' --limit=1 --project=$(PROJECT_ID))
 OAUTH_CLIENT_ID = $(shell gcloud secrets versions access latest --secret=iap-secret --project=$(PROJECT_ID) | jq -r '.web.client_id')
+
+# These variables are only used when running Locust in headless mode on Cloud Run jobs. They can be adjusted based on the requirements of the load tests.
 LOCUST_HEADLESS=true
 LOCUST_LOCUSTFILE=locustfile.py
 LOCUST_USERS=30
@@ -9,7 +11,7 @@ LOCUST_SPAWN_RATE=10
 LOCUST_RUN_TIME=5m
 LOCUST_CSV=locust_tasks_result/
 LOCUST_TEST_ENDPOINTS=get_unit_data
-LOCUST_TEST_CIR_ENDPOINTS=all
+LOCUST_TEST_CIR_ENDPOINTS=get_ci_schema
 LOCUST_DATASET_ENTRIES=1000
 LOCUST_PROCESSES=-1
 
