@@ -6,38 +6,35 @@ from typing import Any
 from locust.runners import WorkerRunner
 
 
-class PreProcessBase(ABC):
+class PostProcessBase(ABC):
     environment: Any
-    worker_index: int | None
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def preprocess_master(self) -> None:
-        """Pre-process the data for the test for master node"""
+    def postprocess_master(self) -> None:
+        """Post-process the data for the test for master node"""
         pass
 
     @abstractmethod
-    def preprocess_worker(self) -> None:
-        """Pre-process the data for the test for worker nodes"""
+    def postprocess_worker(self) -> None:
+        """Post-process the data for the test for worker nodes"""
         pass
 
-    def preprocess(self) -> None:
-        """Pre-process the data for the test"""
+    def postprocess(self) -> None:
+        """Post-process the data for the test"""
         if os.environ.get("LOCUST_HEADLESS") == "true":
             # Headless mode
             if isinstance(self.environment.runner, WorkerRunner):
-                # Worker Node operation
-                self.preprocess_worker()
+                self.postprocess_worker()
             else:
-                # Master Node operation
-                self.preprocess_master()
+                self.postprocess_master()
         else:
             # Non-headless mode - run both master and worker operations in the same process
-            self.preprocess_master()
-            self.preprocess_worker()
+            self.postprocess_master()
+            self.postprocess_worker()
 
     def success(self, message: str) -> int:
-        """Handle successful pre-processing
+        """Handle successful post-processing
 
         Args:
             message (str): the success message to log
@@ -50,7 +47,7 @@ class PreProcessBase(ABC):
         return 1
 
     def skip(self, message: str) -> int:
-        """Handle skipped pre-processing
+        """Handle skipped post-processing
 
         Args:
             message (str): the skip message to log
@@ -63,7 +60,7 @@ class PreProcessBase(ABC):
         return 0
 
     def error(self, message: str) -> int:
-        """Handle errors during pre-processing
+        """Handle errors during post-processing
 
         Args:
             message (str): the error message to log
@@ -72,7 +69,7 @@ class PreProcessBase(ABC):
             integer: -1 for failed pre-processing
         """
         self.logger.error(message)
-        self.logger.error("Pre-process has failed. Program is shutting down.")
+        self.logger.error("Post-process has failed. Program is shutting down.")
 
         self.environment.process_exit_code = 1
 

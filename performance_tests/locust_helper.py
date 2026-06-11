@@ -19,8 +19,8 @@ class LocustHelper:
     sds_get_dataset_metadata_url: str = "/v1/dataset_metadata"
     sds_get_schema_metadata_url: str = "/v1/schema_metadata"
 
-    cir_post_schema_url: str = "/collection-instruments"
-    cir_get_schema_metadata_url: str = "/collection-instruments/metadata"
+    cir_schema_url: str = "/collection-instruments"
+    cir_schema_metadata_url: str = "/collection-instruments/metadata"
 
     cir_ci_survey_id_placeholder: str = "<locust_survey_id>"
     cir_ci_form_type_placeholder: str = "<locust_form_type>"
@@ -359,7 +359,7 @@ class LocustHelper:
         payload_mapped = self.map_schema_payload(payload)
 
         response = requests.post(
-            f"{base_url}{self.cir_post_schema_url}?guid={guid}&validator_version={validator_version}",
+            f"{base_url}{self.cir_schema_url}?guid={guid}&validator_version={validator_version}",
             headers=headers,
             json=payload_mapped,
             timeout=60,
@@ -388,7 +388,7 @@ class LocustHelper:
             response: the response from the API
         """
         response = requests.get(
-            f"{base_url}{self.cir_get_schema_metadata_url}?classifier_type={classifier_type}&classifier_value={classifier_value}&language={language}&survey_id={survey_id}",
+            f"{base_url}{self.cir_schema_metadata_url}?classifier_type={classifier_type}&classifier_value={classifier_value}&language={language}&survey_id={survey_id}",
             headers=headers,
             timeout=60,
         )
@@ -443,3 +443,31 @@ class LocustHelper:
 
         logger.error(f"Error getting CI schema guid using survey_id: {survey_id} form_type: {classifier_value} and language: {language}.")
         return None
+
+    def delete_cir_schema_record_after_test(
+            self,
+            headers: dict,
+            base_url: str,
+            survey_id: str,
+    ) -> int:
+        """Deletes CI schema record after test
+
+        Args:
+            headers (dict): the headers for the request
+            base_url (str): the base url for the request
+            survey_id (str): the survey id
+
+        Returns:
+            int: 1 if the CI schema record is deleted successfully, -1 otherwise
+        """
+        response = requests.delete(
+            f"{base_url}{self.cir_schema_url}?survey_id={survey_id}",
+            headers=headers,
+            timeout=60,
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f"Error deleting CI schema record. Status code: {response.status_code}")
+            return -1
+
+        return 1

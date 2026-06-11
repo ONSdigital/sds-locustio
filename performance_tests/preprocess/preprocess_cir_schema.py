@@ -45,7 +45,7 @@ class PreProcessCIRSchema(PreProcessBase):
             return self.error("Error creating CI Schema record")
 
         return self.success(
-            f"CIR schema pre-processing completed successfully on master"
+            "CIR schema pre-processing completed successfully on master"
         )
 
     def preprocess_worker(self) -> int:

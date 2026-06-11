@@ -4,13 +4,13 @@ import os
 
 from configs.config import config, App
 from locust import FastHttpUser, between, events
-from locust.runners import MasterRunner
 from locust_helper import LocustHelper
 from configs.endpoints_config import (SDS_ENDPOINTS, CIR_ENDPOINTS, SDS_ENDPOINTS_CHOICE, CIR_ENDPOINTS_CHOICE,
                                       SDS_ENDPOINTS_DEFAULT, CIR_ENDPOINTS_DEFAULT, EndpointConfig)
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
 from locust_tests_factory import LocustTestsFactory
+from postprocess.postprocess_mapper import PostprocessMapper
 from preprocess.preprocess_mapper import PreprocessMapper
 
 # Set up logging
@@ -76,27 +76,29 @@ def on_test_start(environment, **kwargs):
         environment=environment
     )
 
-    if os.environ.get("LOCUST_HEADLESS") == "true":
-        # Headless mode
-        if not isinstance(environment.runner, MasterRunner):
-            # Worker Node operation
-            for preprocessor in preprocessors_required:
-                preprocessor.preprocess_worker()
+    for preprocessor in preprocessors_required:
+        preprocessor.preprocess()
 
-            runtime_config.set_config_from_preprocessors(preprocessors_required)
+    runtime_config.set_config_from_preprocessors(preprocessors_required)
 
-        else:
-            # Master Node operation
-            for preprocessor in preprocessors_required:
-                preprocessor.preprocess_master()
 
-    else:
-        # Non-headless mode - run both master and worker operations in the same process
-        for preprocessor in preprocessors_required:
-            preprocessor.preprocess_master()
-            preprocessor.preprocess_worker()
+@events.test_stop.add_listener
+def on_test_stop(environment, **kwargs):
+    """
+    Function to run after the test ends
+    """
+    logger.info("Test is stopping. Performing cleanup if necessary.")
 
-        runtime_config.set_config_from_preprocessors(preprocessors_required)
+    postprocess_mapper = PostprocessMapper()
+
+    postprocess_required = postprocess_mapper.initiate_postprocessors(
+        header=runtime_config.HEADER,
+        environment=environment
+    )
+
+    for postprocessor in postprocess_required:
+        postprocessor.postprocess()
+
 
 
 class PerformanceTests(FastHttpUser):
