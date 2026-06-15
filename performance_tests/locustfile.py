@@ -1,25 +1,28 @@
 import datetime
 import logging
 import os
+from typing import Final
+
+import gevent
+from locust.runners import MasterRunner
 
 from configs.config import config, App
 from locust import FastHttpUser, between, events
 from locust_helper import LocustHelper
-from configs.endpoints_config import (SDS_ENDPOINTS, CIR_ENDPOINTS, SDS_ENDPOINTS_CHOICE, CIR_ENDPOINTS_CHOICE,
-                                      SDS_ENDPOINTS_DEFAULT, CIR_ENDPOINTS_DEFAULT, EndpointConfig)
+from configs.endpoints_config import ENDPOINTS_CONFIG, EndpointConfig
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
 from locust_tests_factory import LocustTestsFactory
 from postprocess.postprocess_mapper import PostprocessMapper
 from preprocess.preprocess_mapper import PreprocessMapper
 
-# Set up logging
-
 logger = logging.getLogger(__name__)
 
-# Set up runtime config to store runtime values that are needed across different test methods and processes
+# Set test endpoints
+TEST_ENDPOINTS_CONFIG: Final[dict] = ENDPOINTS_CONFIG.get(config.APP)
 
-runtime_config = RuntimeConfig()
+# Set up runtime config to store runtime values that are needed across different test methods and processes
+runtime_config: RuntimeConfig = RuntimeConfig()
 
 # Set the subpath for the csv file with current timestamp if headless mode is enabled
 if os.environ.get("LOCUST_HEADLESS") == "true":
@@ -28,16 +31,7 @@ if os.environ.get("LOCUST_HEADLESS") == "true":
     os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
 # Initialize LocustHelper class
-locust_helper = LocustHelper()
-
-if config.APP == App.SDS:
-    TEST_ENDPOINTS = SDS_ENDPOINTS
-    TEST_ENDPOINTS_CHOICE = SDS_ENDPOINTS_CHOICE
-    TEST_ENDPOINTS_DEFAULT = SDS_ENDPOINTS_DEFAULT
-elif config.APP == App.CIR:
-    TEST_ENDPOINTS = CIR_ENDPOINTS
-    TEST_ENDPOINTS_CHOICE = CIR_ENDPOINTS_CHOICE
-    TEST_ENDPOINTS_DEFAULT = CIR_ENDPOINTS_DEFAULT
+locust_helper: LocustHelper = LocustHelper()
 
 
 @events.init_command_line_parser.add_listener
@@ -47,8 +41,8 @@ def _(parser):
         "--test-endpoints",
         type=str,
         env_var="LOCUST_TEST_ENDPOINTS",
-        choices= TEST_ENDPOINTS_CHOICE,
-        default=TEST_ENDPOINTS_DEFAULT,
+        choices= TEST_ENDPOINTS_CONFIG["test_endpoints_choice"],
+        default=TEST_ENDPOINTS_CONFIG["test_endpoints_default"],
         help="Choose endpoints to test",
     )
     if config.APP == App.SDS:
@@ -82,12 +76,13 @@ def on_test_start(environment, **kwargs):
     runtime_config.set_config_from_preprocessors(preprocessors_required)
 
 
-@events.test_stop.add_listener
-def on_test_stop(environment, **kwargs):
+@events.quitting.add_listener
+def on_test_quitting(environment, **kwargs):
     """
-    Function to run after the test ends
+    Function to run after the test ends, just before the program quits. This is a replacement of the previous
+    on_stop event hook to ensure it runs after all worker nodes have definitely stopped
     """
-    logger.info("Test is stopping. Performing cleanup if necessary.")
+    logger.info("Program is quitting...")
 
     postprocess_mapper = PostprocessMapper()
 
@@ -96,14 +91,20 @@ def on_test_stop(environment, **kwargs):
         environment=environment
     )
 
+    # If master node, wait for all users to finish executing before proceeding with post-processing
+    if not os.environ.get("LOCUST_HEADLESS") == "true" or isinstance(environment.runner, MasterRunner):
+        while environment.runner.user_count > 0:
+            gevent.sleep(0.5)
+
+    logger.info("All users have finished executing. Proceeding with post-processing.")
+
     for postprocessor in postprocess_required:
         postprocessor.postprocess()
 
 
-
 class PerformanceTests(FastHttpUser):
     wait_time = between(0.05, 0.1)
-    tasks = [] # Tasks will be populated dynamically at init
+    tasks = [] # Tasks will be populated dynamically
     host = config.BASE_URL # Required by Locust
     endpoint_configs: dict[str, EndpointConfig] # Endpoint configurations for the selected endpoints to be tested
     endpoint_helpers: EndpointsHelpers
@@ -114,7 +115,7 @@ class PerformanceTests(FastHttpUser):
         super().__init__(*args, **kwargs)
 
         # Define endpoints to be tested
-        self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, TEST_ENDPOINTS)
+        self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, TEST_ENDPOINTS_CONFIG["test_endpoints"])
         self.endpoint_configs = self.endpoint_helpers.get_endpoint_configs_from_selection(
             [self.environment.parsed_options.test_endpoints]
         )

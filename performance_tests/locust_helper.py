@@ -460,14 +460,16 @@ class LocustHelper:
         Returns:
             int: 1 if the CI schema record is deleted successfully, -1 otherwise
         """
+
         response = requests.delete(
             f"{base_url}{self.cir_schema_url}?survey_id={survey_id}",
             headers=headers,
-            timeout=60,
         )
 
-        if response.status_code != HTTPStatus.OK:
+        if response.status_code not in (HTTPStatus.OK, HTTPStatus.NOT_FOUND):
             logger.error(f"Error deleting CI schema record. Status code: {response.status_code}")
             return -1
+
+        logger.info(f"Called delete CI schema. Status code: {response.status_code}.")
 
         return 1

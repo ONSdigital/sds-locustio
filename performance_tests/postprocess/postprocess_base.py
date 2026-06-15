@@ -3,6 +3,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
+import gevent
 from locust.runners import WorkerRunner
 
 
@@ -25,13 +26,16 @@ class PostProcessBase(ABC):
         if os.environ.get("LOCUST_HEADLESS") == "true":
             # Headless mode
             if isinstance(self.environment.runner, WorkerRunner):
+                # Worker Node operation
                 self.postprocess_worker()
             else:
+                # Master Node operation
                 self.postprocess_master()
         else:
             # Non-headless mode - run both master and worker operations in the same process
-            self.postprocess_master()
+            # Run post-processing for worker first, then master
             self.postprocess_worker()
+            self.postprocess_master()
 
     def success(self, message: str) -> int:
         """Handle successful post-processing

@@ -13,9 +13,9 @@ class PostProcessCirDeleteSchemas(PostProcessBase):
 
     def postprocess_master(self) -> None:
         if self.locust_helper.delete_cir_schema_record_after_test(
-            headers=self.header,
-            base_url=config.BASE_URL,
-            survey_id=config.TEST_SURVEY_ID,
+                headers=self.header,
+                base_url=config.BASE_URL,
+                survey_id=config.TEST_SURVEY_ID,
         ) < 0:
             return self.error(f"Failed to delete CIR schema record after test.")
 

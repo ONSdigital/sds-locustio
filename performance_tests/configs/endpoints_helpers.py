@@ -1,10 +1,9 @@
-import random
 from urllib.parse import urlencode
 
 from locust.clients import ResponseContextManager
 from locust.contrib.fasthttp import FastHttpSession, FastResponse
 
-from configs.endpoints_config import EndpointConfig, DATASET_ID_PLACEHOLDER, SCHEMA_ID_PLACEHOLDER, VALIDATOR_VERSION_PLACEHOLDER
+from configs.endpoints_config import EndpointConfig, RUNTIME_DATASET_ID_PLACEHOLDER, RUNTIME_SCHEMA_ID_PLACEHOLDER
 from configs.runtime_config import RuntimeConfig
 
 from locust_helper import LocustHelper
@@ -56,20 +55,46 @@ class EndpointsHelpers:
 
         return full_url
 
-    def map_params_to_runtime_values(self, params: dict[str, str], runtime_config: RuntimeConfig) -> dict[str, str]:
+    def map_params_to_runtime_values(self, params: dict[str, str | dict], runtime_config: RuntimeConfig) -> dict[str, str]:
         """Map the parameters for a given endpoint name to their corresponding runtime values"""
         mapped_params = {}
+
         for key, value in params.items():
-            if value == DATASET_ID_PLACEHOLDER:
-                mapped_params[key] = runtime_config.DATASET_ID
-            elif value == SCHEMA_ID_PLACEHOLDER:
-                mapped_params[key] = runtime_config.SCHEMA_GUID
-            elif value == VALIDATOR_VERSION_PLACEHOLDER:
-                mapped_params[key] = str(random.randint(0, 20)) + "." + str(random.randint(0, 20)) + "." + str(random.randint(0, 20))
+            if isinstance(value, dict):
+                # Recursively map nested parameters
+                mapped_params[key] = self.map_params_to_runtime_values(value, runtime_config)
             else:
-                mapped_params[key] = value
+                if value == RUNTIME_DATASET_ID_PLACEHOLDER:
+                    mapped_params[key] = runtime_config.DATASET_ID
+                elif value == RUNTIME_SCHEMA_ID_PLACEHOLDER:
+                    mapped_params[key] = runtime_config.SCHEMA_GUID
+                else:
+                    mapped_params[key] = value
 
         return mapped_params
+
+    def generate_params_value_from_endpoints_func(self, params: dict[str, str | dict]) -> dict[str, str]:
+        """Get the parameter values by calling the corresponding functions if set"""
+        output_params = {}
+
+        for key, value in params.items():
+            if isinstance(value, dict):
+                v = value.get("value")
+                func = value.get("function")
+
+                if not func:
+                    output_params[key] = value
+                else:
+                    if not v:
+                        output_params[key] = func()
+                    elif isinstance(v, list):
+                        output_params[key] = func(*v)
+                    else:
+                        output_params[key] = func(v)
+            else:
+                output_params[key] = value
+
+        return output_params
 
     def send_request(self, client: FastHttpSession, endpoint_name: str, runtime_config: RuntimeConfig) -> ResponseContextManager | FastResponse:
         """Send a request to the given URL using the specified HTTP method and headers"""
@@ -81,7 +106,8 @@ class EndpointsHelpers:
             group_name = f"{config.BASE_URL}{group_name}"
 
         mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
-        full_url = self.generate_full_url(endpoint_name, params=mapped_params)
+        processed_params = self.generate_params_value_from_endpoints_func(mapped_params) if mapped_params else None
+        full_url = self.generate_full_url(endpoint_name, params=processed_params)
 
         # Load and map payload if it exists for the endpoint
         payload = self.get_endpoint_payload(endpoint_name)

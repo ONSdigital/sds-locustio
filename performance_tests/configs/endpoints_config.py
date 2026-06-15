@@ -4,12 +4,16 @@ from configs.config import config
 from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
 from preprocess.preprocess_base import PreProcessBase
 
+from configs import endpoints_func
+
+from configs.config import App
+
 
 class EndpointConfig(TypedDict):
     url: str # URL path of the endpoint, excluding base URL
     method: str # HTTP method (GET, POST, PUT, etc.)
     name: str | None # Group name to group endpoint with different parameters calling into the same test method in result
-    params: dict[str, str] | None # URL parameters to be sent with the request, with optional placeholders for runtime values
+    params: dict[str, str | dict] | None # URL parameters to be sent with the request, with optional placeholders for runtime values
     payload: str | None # File path for the payload to be sent with the request, if applicable
 
 # SDS Endpoints
@@ -27,15 +31,12 @@ GET_SURVEY_LIST: str = "get_survey_list"
 GET_CI_METADATA: str = "get_ci_metadata"
 GET_CI_SCHEMA: str = "get_ci_schema"
 GET_CI_VALIDATOR_METADATA: str = "get_ci_validator_metadata"
-POST_CI: str = "post_ci"
+POST_CI: str = "post_ci_schema"
 PUT_VALIDATOR_VERSION: str = "put_validator_version"
 
 # Runtime value placeholders
-DATASET_ID_PLACEHOLDER = "dataset_id_placeholder"
-SCHEMA_ID_PLACEHOLDER = "schema_guid_placeholder"
-
-# Runtime function placeholders
-VALIDATOR_VERSION_PLACEHOLDER = "validator_version_placeholder"
+RUNTIME_DATASET_ID_PLACEHOLDER = "dataset_id_placeholder"
+RUNTIME_SCHEMA_ID_PLACEHOLDER = "schema_guid_placeholder"
 
 
 SDS_ENDPOINTS: dict[str, EndpointConfig] = {
@@ -62,7 +63,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
         "method": "GET",
         "name": None,
         "params": {
-            "guid": SCHEMA_ID_PLACEHOLDER,
+            "guid": RUNTIME_SCHEMA_ID_PLACEHOLDER,
         },
         "payload": None,
     },
@@ -81,7 +82,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
         "method": "GET",
         "name": None,
         "params": {
-            "dataset_id": DATASET_ID_PLACEHOLDER,
+            "dataset_id": RUNTIME_DATASET_ID_PLACEHOLDER,
             "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
         },
         "payload": None,
@@ -97,6 +98,19 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
 
 
 CIR_ENDPOINTS: dict[str, EndpointConfig] = {
+    POST_CI: {
+        "url": "/collection-instruments",
+        "method": "POST",
+        "name": "/collection-instruments?guid=[guid]&validator_version=[validator_version]",
+        "params": {
+            "guid": {
+                "value": config.TEST_CI_GUID,
+                "function": endpoints_func.generate_unique_value,
+            },
+             "validator_version": config.TEST_CI_VALIDATOR_VERSION,
+        },
+        "payload": config.TEST_CI_SCHEMA_FILE,
+    },
     GET_CI_METADATA: {
         "url": "/collection-instruments/metadata",
         "method": "GET",
@@ -124,7 +138,10 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "name": "/collection-instruments/validator-version?guid=[guid]&validator_version=[validator_version]",
         "params": {
             "guid": config.TEST_CI_GUID,
-            "validator_version": VALIDATOR_VERSION_PLACEHOLDER,
+            "validator_version": {
+                "value": None,
+                "function": endpoints_func.generate_unique_validator_version,
+            },
         },
         "payload": config.TEST_CI_SCHEMA_FILE,
     },
@@ -135,3 +152,16 @@ CIR_ENDPOINTS_CHOICE: list = ["all"] + list(CIR_ENDPOINTS.keys())
 
 SDS_ENDPOINTS_DEFAULT: str = GET_UNIT_DATA
 CIR_ENDPOINTS_DEFAULT: str = GET_CI_METADATA
+
+ENDPOINTS_CONFIG = {
+    App.SDS: {
+        "test_endpoints": SDS_ENDPOINTS,
+        "test_endpoints_choice": SDS_ENDPOINTS_CHOICE,
+        "test_endpoints_default": SDS_ENDPOINTS_DEFAULT,
+    },
+    App.CIR: {
+        "test_endpoints": CIR_ENDPOINTS,
+        "test_endpoints_choice": CIR_ENDPOINTS_CHOICE,
+        "test_endpoints_default": CIR_ENDPOINTS_DEFAULT,
+    },
+}
