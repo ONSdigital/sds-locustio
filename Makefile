@@ -20,9 +20,16 @@ deploy-sds-locust-service:
 	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest .
 	gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest --set-env-vars=APP=sds,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SDS_SANDBOX_IP_ADDRESS}.nip.io,LOCUST_HEADLESS=false,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID} --region=europe-west2 --port=8089 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
 
+deploy-cir-locust-service:
+	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest .
+	gcloud run deploy cir-locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest --set-env-vars=APP=cir,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${CIR_SANDBOX_IP_ADDRESS}.nip.io,LOCUST_HEADLESS=false,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID} --region=europe-west2 --port=8089 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
+
 # Cloud Run Admin role to user account is required to run the following command successfully.
-run-locust-cloud:
+run-sds-locust-cloud:
 	gcloud run services proxy locust-tasks --project ${PROJECT_ID} --region europe-west2
+
+run-cir-locust-cloud:
+	gcloud run services proxy cir-locust-tasks --project ${PROJECT_ID} --region europe-west2
 
 # Bucket with the name format `{PROJECT_ID}-locust-tasks-result` has to be created beforehand for the following command to run successfully.
 deploy-sds-locust-job:

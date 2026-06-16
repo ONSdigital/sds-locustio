@@ -43,7 +43,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SCHEMA_METADATA: {
         "url": "/v1/schema_metadata",
         "method": "GET",
-        "name": None,
+        "name": "/v1/schema_metadata?survey_id=[survey_id]",
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
         },
@@ -52,7 +52,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SCHEMA: {
         "url": "/v1/schema",
         "method": "GET",
-        "name": None,
+        "name": "/v1/schema?survey_id=[survey_id]",
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
         },
@@ -61,7 +61,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SCHEMA_V2: {
         "url": "/v2/schema",
         "method": "GET",
-        "name": None,
+        "name": "/v2/schema?guid=[guid]",
         "params": {
             "guid": RUNTIME_SCHEMA_ID_PLACEHOLDER,
         },
@@ -70,7 +70,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_DATASET_METADATA: {
         "url": "/v1/dataset_metadata",
         "method": "GET",
-        "name": None,
+        "name": "/v1/dataset_metadata?survey_id=[survey_id]&period_id=[period_id]",
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "period_id": config.TEST_PERIOD_ID,
@@ -80,7 +80,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_UNIT_DATA: {
         "url": "/v1/unit_data",
         "method": "GET",
-        "name": None,
+        "name": "/v1/unit_data?dataset_id=[dataset_id]&identifier=[identifier]",
         "params": {
             "dataset_id": RUNTIME_DATASET_ID_PLACEHOLDER,
             "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
@@ -90,7 +90,7 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SURVEY_LIST: {
         "url": "/v1/survey_list",
         "method": "GET",
-        "name": None,
+        "name": "/v1/survey_list",
         "params": None,
         "payload": None,
     }
@@ -114,7 +114,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_CI_METADATA: {
         "url": "/collection-instruments/metadata",
         "method": "GET",
-        "name": None,
+        "name": "/collection-instruments/metadata?survey_id=[survey_id]&language=[language]&classifier_type=[classifier_type]&classifier_value=[classifier_value]",
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "language": config.TEST_CI_LANGUAGE,
@@ -126,7 +126,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_CI_SCHEMA: {
         "url": "/collection-instruments/schema",
         "method": "GET",
-        "name": None,
+        "name": "/collection-instruments/schema?guid=[guid]",
         "params": {
             "guid": config.TEST_CI_GUID,
         },
@@ -146,6 +146,8 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "payload": config.TEST_CI_SCHEMA_FILE,
     },
 }
+
+ALL_ENDPOINTS: dict[str, EndpointConfig] = {**SDS_ENDPOINTS, **CIR_ENDPOINTS}
 
 SDS_ENDPOINTS_CHOICE: list = ["all"] + list(SDS_ENDPOINTS.keys())
 CIR_ENDPOINTS_CHOICE: list = ["all"] + list(CIR_ENDPOINTS.keys())

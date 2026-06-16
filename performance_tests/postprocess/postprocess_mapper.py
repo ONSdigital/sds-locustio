@@ -3,6 +3,8 @@ from postprocess.postprocess_base import PostProcessBase
 
 from postprocess.postprocess_cir_delete_schemas import PostProcessCirDeleteSchemas
 
+from postprocess.postprocess_result_evaluator import PostProcessResultEvaluator
+
 
 class PostprocessMapper:
     postprocessors: list[PostProcessBase] = []
@@ -12,12 +14,10 @@ class PostprocessMapper:
 
     def initiate_postprocessors(self, header: dict, environment) -> list[PostProcessBase]:
         if self.mapping_app == App.SDS:
-            # For SDS, we do not have any post-processing steps
-            postprocessors_list = []
+            postprocessors_list = [PostProcessResultEvaluator]
 
         else:
-            # For CIR, we need to delete the CIR Schema record after the test
-            postprocessors_list = [PostProcessCirDeleteSchemas]
+            postprocessors_list = [PostProcessCirDeleteSchemas, PostProcessResultEvaluator]
 
         self.postprocessors = [postprocessor(header, environment) for postprocessor in postprocessors_list]
 
