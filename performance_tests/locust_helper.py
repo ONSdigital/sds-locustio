@@ -32,11 +32,11 @@ class LocustHelper:
         """
         Set the path for the csv result file if headless mode is enabled.
 
-        # Format: /<LOCUST_CSV>/<timestamp>/<APP>/
+        # Format: /<LOCUST_CSV>/<APP>/<timestamp>/
         """
         if config.HEADLESS_MODE:
             timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-            subpath = timestamp + "/" + config.APP + "/result"
+            subpath = config.APP + "/" + timestamp + "/result"
             os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
     # Token expiry time is 1 hour and that will be the max time for the test at the moment

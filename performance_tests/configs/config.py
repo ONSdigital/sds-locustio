@@ -13,7 +13,7 @@ class Config:
     APP: App = get_value_from_env("APP", "sds") # Can be set to "sds" or "cir" to specify which application to test
     BASE_URL = get_value_from_env("BASE_URL", "http://127.0.0.1:3033") # Base URL for the application under test. Require https://
     PROJECT_ID = get_value_from_env("PROJECT_ID", "ons-sds-sandbox-01")
-    HEADLESS_MODE = get_value_from_env("HEADLESS_MODE", "false").lower() == "true"
+    HEADLESS_MODE = get_value_from_env("LOCUST_HEADLESS", "false").lower() == "true"
     TEST_SCHEMA_FILE = "test_schema/schema.json"
     TEST_DATASET_FILE = "test_dataset/generated_data.json"
     TEST_CI_SCHEMA_FILE = "test_schema/ci_schema.json"
