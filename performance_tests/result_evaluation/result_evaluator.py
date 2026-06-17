@@ -1,7 +1,8 @@
 from logging import Logger
-from typing import TypedDict, NotRequired
+from typing import NotRequired, TypedDict
 
-from result_evaluation.anomalies import Anomaly, ANOMALIES, FAIL_RATIO_EXCEEDED_ANOMALY, AVG_RESPONSE_TIME_EXCEEDED_ANOMALY
+from result_evaluation.anomalies import ANOMALIES, AVG_RESPONSE_TIME_EXCEEDED_ANOMALY, FAIL_RATIO_EXCEEDED_ANOMALY, Anomaly
+
 
 class EvaluationResult(TypedDict):
     """
@@ -32,7 +33,7 @@ class ResultEvaluator:
         Returns:
         bool: True if the fail ratio is within the threshold, Anomaly otherwise.
         """
-        if fail_ratio <= self.get_fail_ratio_threshold():
+        if fail_ratio > self.get_fail_ratio_threshold():
             return EvaluationResult(result=False, anomaly=ANOMALIES.get(FAIL_RATIO_EXCEEDED_ANOMALY))
 
         return EvaluationResult(result=True, anomaly=None)
@@ -50,7 +51,7 @@ class ResultEvaluator:
         bool: True if the average response time is within the threshold, Anomaly otherwise.
         """
         threshold = self.get_avg_response_time_threshold(endpoint)
-        if avg_response_time <= threshold:
+        if avg_response_time > threshold:
             return EvaluationResult(result=False, anomaly=ANOMALIES.get(AVG_RESPONSE_TIME_EXCEEDED_ANOMALY))
 
         return EvaluationResult(result=True, anomaly=None)
@@ -77,7 +78,7 @@ class ResultEvaluator:
         """
         return self.fail_ratio_thresholds
 
-    def prompt_anomaly_logging(self, evaluation_result: EvaluationResult) -> None:
+    def prompt_anomaly(self, evaluation_result: EvaluationResult) -> None:
         """
         Prompt the logging of an anomaly if the evaluation result indicates an anomaly.
 

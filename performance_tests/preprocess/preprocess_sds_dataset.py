@@ -3,9 +3,8 @@ from http import HTTPStatus
 from configs.config import config
 from json_generator import JsonGenerator
 from locust.runners import WorkerRunner
-from locust_test import FIXED_IDENTIFIERS
 from locust_helper import LocustHelper
-
+from locust_test import FIXED_IDENTIFIERS
 from preprocess.preprocess_base import PreProcessBase
 
 
@@ -71,7 +70,7 @@ class PreProcessSDSDataset(PreProcessBase):
         self.locust_helper.force_run_schedule_job()
 
         return self.success(
-            f"SDS dataset pre-processing completed successfully on master"
+            "SDS dataset pre-processing completed successfully on master"
         )
 
     def preprocess_worker(self) -> int:

@@ -4,14 +4,13 @@ import os
 from typing import Final
 
 import gevent
-from locust.runners import MasterRunner
-
-from configs.config import config, App
-from locust import FastHttpUser, between, events
-from locust_helper import LocustHelper
+from configs.config import App, config
 from configs.endpoints_config import ENDPOINTS_CONFIG, EndpointConfig
 from configs.endpoints_helpers import EndpointsHelpers
 from configs.runtime_config import RuntimeConfig
+from locust import FastHttpUser, between, events
+from locust.runners import MasterRunner
+from locust_helper import LocustHelper
 from locust_tests_factory import LocustTestsFactory
 from postprocess.postprocess_mapper import PostprocessMapper
 from preprocess.preprocess_mapper import PreprocessMapper

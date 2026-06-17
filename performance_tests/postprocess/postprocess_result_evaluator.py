@@ -1,14 +1,8 @@
-from postprocess.postprocess_base import PostProcessBase
-
-from locust_helper import LocustHelper
-
-from configs.config import config
-
-from result_evaluation.result_evaluator import ResultEvaluator, EvaluationResult
-
-from result_evaluation.thresholds import THRESHOLDS_FAIL_RATIO, THRESHOLDS_AVG_RESPONSE_TIME
-
 from configs.endpoints_config import ALL_ENDPOINTS
+from locust_helper import LocustHelper
+from postprocess.postprocess_base import PostProcessBase
+from result_evaluation.result_evaluator import EvaluationResult, ResultEvaluator
+from result_evaluation.thresholds import THRESHOLDS_AVG_RESPONSE_TIME, THRESHOLDS_FAIL_RATIO
 
 
 class PostProcessResultEvaluator(PostProcessBase):
@@ -17,6 +11,7 @@ class PostProcessResultEvaluator(PostProcessBase):
         self.environment = environment
         self.locust_helper = LocustHelper()
         self.result_evaluator = ResultEvaluator(
+            logger=self.logger,
             fail_ratio_thresholds=THRESHOLDS_FAIL_RATIO,
             avg_response_time_thresholds=THRESHOLDS_AVG_RESPONSE_TIME
         )
@@ -33,7 +28,10 @@ class PostProcessResultEvaluator(PostProcessBase):
                 self.logger.warning(f"Endpoint {name} with method {method} not found in endpoint configs.")
 
             threshold = self.result_evaluator.get_avg_response_time_threshold(endpoint_key)
-            evaluation_result: EvaluationResult = self.result_evaluator.evaluate_avg_response_time(endpoint_key, stats.avg_response_time)
+            evaluation_result: EvaluationResult = self.result_evaluator.evaluate_avg_response_time(
+                endpoint=endpoint_key,
+                avg_response_time=stats.avg_response_time
+            )
 
             if not evaluation_result["result"]:
                 self.result_evaluator.prompt_anomaly(evaluation_result)
@@ -42,19 +40,19 @@ class PostProcessResultEvaluator(PostProcessBase):
                                   f"Threshold: {threshold} ms")
                 self.environment.process_exit_code = 1
 
-        self.logger.into("Average response time evaluation completed.")
+        self.logger.info("Average response time evaluation completed.")
 
         # Evaluate total fail ratio
         total_fail_ratio = self.environment.stats.total.fail_ratio
 
-        evaluation_result: EvaluationResult = self.result_evaluator.evaluate_fail_ratio(total_fail_ratio)
+        evaluation_result: EvaluationResult = self.result_evaluator.evaluate_fail_ratio(fail_ratio=total_fail_ratio)
 
         if not evaluation_result["result"]:
             self.result_evaluator.prompt_anomaly(evaluation_result)
             self.logger.error(f"Test failed due to failure ratio {total_fail_ratio} > {self.result_evaluator.get_fail_ratio_threshold()}")
             self.environment.process_exit_code = 1
 
-        self.logger.into("Fail ratio evaluation completed.")
+        self.logger.info("Fail ratio evaluation completed.")
 
         return self.success("Successfully analysed test result.")
 
@@ -73,7 +71,7 @@ class PostProcessResultEvaluator(PostProcessBase):
             str: The endpoint key
         """
         for key, value in self.endpoint_configs.items():
-            if value["name"] == endpoint_name and value["method"].upper() == endpoint_method.upper():
+            if value["name"] in endpoint_name and value["method"].upper() == endpoint_method.upper():
                 return key
 
         return None

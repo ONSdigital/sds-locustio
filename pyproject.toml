@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "firebase-admin==7.3.0",
+    "functions-framework==3.9.2",
     "google-cloud-firestore==2.21.0",
     "google-cloud-scheduler==2.16.1",
     "google-cloud-storage==3.9.0",
@@ -30,8 +32,6 @@ version-check = [
 line-length = 127
 indent-width = 4
 
-[[tool.uv.index]]
-url = "https://europe-west2-python.pkg.dev/ons-sds-ci/sds-python-packages/simple/"
 
 [tool.ruff.lint]
 select = [

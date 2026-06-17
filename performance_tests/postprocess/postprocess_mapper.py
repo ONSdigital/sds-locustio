@@ -1,8 +1,6 @@
-from configs.config import config, App
+from configs.config import App, config
 from postprocess.postprocess_base import PostProcessBase
-
 from postprocess.postprocess_cir_delete_schemas import PostProcessCirDeleteSchemas
-
 from postprocess.postprocess_result_evaluator import PostProcessResultEvaluator
 
 

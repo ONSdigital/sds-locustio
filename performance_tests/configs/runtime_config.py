@@ -1,7 +1,6 @@
+from preprocess.preprocess_base import PreProcessBase
 from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
 from preprocess.preprocess_sds_schema import PreProcessSDSSchema
-
-from preprocess.preprocess_base import PreProcessBase
 
 
 class RuntimeConfig:

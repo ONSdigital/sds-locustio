@@ -1,8 +1,6 @@
-from postprocess.postprocess_base import PostProcessBase
-
-from locust_helper import LocustHelper
-
 from configs.config import config
+from locust_helper import LocustHelper
+from postprocess.postprocess_base import PostProcessBase
 
 
 class PostProcessCirDeleteSchemas(PostProcessBase):
@@ -17,7 +15,7 @@ class PostProcessCirDeleteSchemas(PostProcessBase):
                 base_url=config.BASE_URL,
                 survey_id=config.TEST_SURVEY_ID,
         ) < 0:
-            return self.error(f"Failed to delete CIR schema record after test.")
+            return self.error("Failed to delete CIR schema record after test.")
 
         return self.success("Successfully deleted CIR schema record after test.")
 

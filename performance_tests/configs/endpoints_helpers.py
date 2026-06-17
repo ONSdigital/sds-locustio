@@ -1,14 +1,11 @@
 from urllib.parse import urlencode
 
+from configs.config import config
+from configs.endpoints_config import RUNTIME_DATASET_ID_PLACEHOLDER, RUNTIME_SCHEMA_ID_PLACEHOLDER, EndpointConfig
+from configs.runtime_config import RuntimeConfig
 from locust.clients import ResponseContextManager
 from locust.contrib.fasthttp import FastHttpSession, FastResponse
-
-from configs.endpoints_config import EndpointConfig, RUNTIME_DATASET_ID_PLACEHOLDER, RUNTIME_SCHEMA_ID_PLACEHOLDER
-from configs.runtime_config import RuntimeConfig
-
 from locust_helper import LocustHelper
-
-from configs.config import config
 
 locust_helper = LocustHelper()
 
@@ -63,13 +60,12 @@ class EndpointsHelpers:
             if isinstance(value, dict):
                 # Recursively map nested parameters
                 mapped_params[key] = self.map_params_to_runtime_values(value, runtime_config)
+            elif value == RUNTIME_DATASET_ID_PLACEHOLDER:
+                mapped_params[key] = runtime_config.DATASET_ID
+            elif value == RUNTIME_SCHEMA_ID_PLACEHOLDER:
+                mapped_params[key] = runtime_config.SCHEMA_GUID
             else:
-                if value == RUNTIME_DATASET_ID_PLACEHOLDER:
-                    mapped_params[key] = runtime_config.DATASET_ID
-                elif value == RUNTIME_SCHEMA_ID_PLACEHOLDER:
-                    mapped_params[key] = runtime_config.SCHEMA_GUID
-                else:
-                    mapped_params[key] = value
+                mapped_params[key] = value
 
         return mapped_params
 
@@ -84,13 +80,12 @@ class EndpointsHelpers:
 
                 if not func:
                     output_params[key] = value
+                elif not v:
+                    output_params[key] = func()
+                elif isinstance(v, list):
+                    output_params[key] = func(*v)
                 else:
-                    if not v:
-                        output_params[key] = func()
-                    elif isinstance(v, list):
-                        output_params[key] = func(*v)
-                    else:
-                        output_params[key] = func(v)
+                    output_params[key] = func(v)
             else:
                 output_params[key] = value
 

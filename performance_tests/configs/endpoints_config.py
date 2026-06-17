@@ -1,18 +1,13 @@
 from typing import TypedDict
 
-from configs.config import config
-from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
-from preprocess.preprocess_base import PreProcessBase
-
 from configs import endpoints_func
-
-from configs.config import App
+from configs.config import App, config
 
 
 class EndpointConfig(TypedDict):
     url: str # URL path of the endpoint, excluding base URL
     method: str # HTTP method (GET, POST, PUT, etc.)
-    name: str | None # Group name to group endpoint with different parameters calling into the same test method in result
+    name: str # Group name to group endpoint with different parameters calling into the same test method in result
     params: dict[str, str | dict] | None # URL parameters to be sent with the request, with optional placeholders for runtime values
     payload: str | None # File path for the payload to be sent with the request, if applicable
 

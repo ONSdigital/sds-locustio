@@ -1,10 +1,9 @@
 from http import HTTPStatus
 
-from locust.runners import WorkerRunner
-from preprocess.preprocess_base import PreProcessBase
-
 from configs.config import config
+from locust.runners import WorkerRunner
 from locust_helper import LocustHelper
+from preprocess.preprocess_base import PreProcessBase
 
 
 class PreProcessCIRSchema(PreProcessBase):

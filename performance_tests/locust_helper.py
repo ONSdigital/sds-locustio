@@ -6,10 +6,9 @@ from http import HTTPStatus
 
 import google.oauth2.id_token
 import requests
-from google.cloud.storage import Bucket
-
 from configs.config import config
 from google.cloud import exceptions, storage
+from google.cloud.storage import Bucket
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class LocustHelper:
             )
             return bucket
 
-        except exceptions.NotFound as exc:
+        except exceptions.NotFound:
             logging.error(f"Error. Bucket not found: {bucket_name}.")
             return None
         except Exception as e:
@@ -85,7 +84,7 @@ class LocustHelper:
             )
 
             return 1
-        except exceptions as exc:
+        except exceptions:
             logging.error(f"Error uploading file {file}.")
             return -1
 
@@ -464,6 +463,7 @@ class LocustHelper:
         response = requests.delete(
             f"{base_url}{self.cir_schema_url}?survey_id={survey_id}",
             headers=headers,
+            timeout=300,
         )
 
         if response.status_code not in (HTTPStatus.OK, HTTPStatus.NOT_FOUND):

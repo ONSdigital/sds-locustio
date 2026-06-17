@@ -1,10 +1,9 @@
 from http import HTTPStatus
 
-from locust.runners import WorkerRunner
-from preprocess.preprocess_base import PreProcessBase
-
 from configs.config import config
+from locust.runners import WorkerRunner
 from locust_helper import LocustHelper
+from preprocess.preprocess_base import PreProcessBase
 
 
 class PreProcessSDSSchema(PreProcessBase):
@@ -37,7 +36,7 @@ class PreProcessSDSSchema(PreProcessBase):
             return self.error("Error creating schema record")
 
         return self.success(
-            f"SDS schema pre-processing completed successfully on master"
+            "SDS schema pre-processing completed successfully on master"
         )
 
     def preprocess_worker(self) -> int:

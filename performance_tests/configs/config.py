@@ -1,7 +1,6 @@
 from enum import StrEnum
 
 from configs.config_helpers import get_value_from_env
-
 from locust_test import FIXED_IDENTIFIERS, LOCUST_TEST_ID
 
 
