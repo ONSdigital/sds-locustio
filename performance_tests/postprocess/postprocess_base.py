@@ -1,9 +1,10 @@
 import logging
-import os
 from abc import ABC, abstractmethod
 from typing import Any
 
 from locust.runners import WorkerRunner
+
+from configs.config import config
 
 
 class PostProcessBase(ABC):
@@ -22,7 +23,7 @@ class PostProcessBase(ABC):
 
     def postprocess(self) -> None:
         """Post-process the data for the test"""
-        if os.environ.get("LOCUST_HEADLESS") == "true":
+        if config.HEADLESS_MODE:
             # Headless mode
             if isinstance(self.environment.runner, WorkerRunner):
                 # Worker Node operation

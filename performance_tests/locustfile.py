@@ -1,6 +1,4 @@
-import datetime
 import logging
-import os
 from typing import Final
 
 import gevent
@@ -23,14 +21,11 @@ TEST_ENDPOINTS_CONFIG: Final[dict] = ENDPOINTS_CONFIG.get(config.APP)
 # Set up runtime config to store runtime values that are needed across different test methods and processes
 runtime_config: RuntimeConfig = RuntimeConfig()
 
-# Set the subpath for the csv file with current timestamp if headless mode is enabled
-if os.environ.get("LOCUST_HEADLESS") == "true":
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-    subpath = timestamp + "/result"
-    os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
-
 # Initialize LocustHelper class
 locust_helper: LocustHelper = LocustHelper()
+
+# Set the path for CSV result files for headless mode.
+locust_helper.set_csv_result_path()
 
 
 @events.init_command_line_parser.add_listener
@@ -91,7 +86,7 @@ def on_test_quitting(environment, **kwargs):
     )
 
     # If master node, wait for all users to finish executing before proceeding with post-processing
-    if not os.environ.get("LOCUST_HEADLESS") == "true" or isinstance(environment.runner, MasterRunner):
+    if not config.HEADLESS_MODE or isinstance(environment.runner, MasterRunner):
         while environment.runner.user_count > 0:
             gevent.sleep(0.5)
 

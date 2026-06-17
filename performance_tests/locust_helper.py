@@ -1,5 +1,7 @@
+import datetime
 import json
 import logging
+import os
 import subprocess
 import time
 from http import HTTPStatus
@@ -24,6 +26,18 @@ class LocustHelper:
     cir_ci_survey_id_placeholder: str = "<locust_survey_id>"
     cir_ci_form_type_placeholder: str = "<locust_form_type>"
     cir_ci_language_placeholder: str = "<locust_language>"
+
+    @staticmethod
+    def set_csv_result_path() -> None:
+        """
+        Set the path for the csv result file if headless mode is enabled.
+
+        # Format: /<LOCUST_CSV>/<timestamp>/<APP>/
+        """
+        if config.HEADLESS_MODE:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+            subpath = timestamp + "/" + config.APP + "/result"
+            os.environ["LOCUST_CSV"] = "/" + os.environ["LOCUST_CSV"] + subpath
 
     # Token expiry time is 1 hour and that will be the max time for the test at the moment
     @staticmethod
