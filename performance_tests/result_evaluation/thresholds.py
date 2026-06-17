@@ -25,4 +25,4 @@ THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
     "default": 500,
 }
 
-THRESHOLDS_FAIL_RATIO: float = 0.01
+THRESHOLDS_FAIL_RATIO: float = 0.01 # 1% fail ratio threshold for all endpoints
