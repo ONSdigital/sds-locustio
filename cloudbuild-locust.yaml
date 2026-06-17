@@ -40,7 +40,7 @@ steps:
     args:
       - "-c"
       - |
-        gcloud run jobs deploy locust-tasks \
+        gcloud run jobs deploy cir-locust-tasks \
         --image europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest \
         --region europe-west2 \
         --cpu=${_CPU} \
