@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from configs.endpoints_config import EndpointConfig
 from configs.runtime_config import RuntimeConfig
