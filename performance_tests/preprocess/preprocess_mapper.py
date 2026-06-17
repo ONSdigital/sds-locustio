@@ -6,7 +6,7 @@ from preprocess.preprocess_sds_schema import PreProcessSDSSchema
 
 
 class PreprocessMapper:
-    preprocessors: list[PreProcessBase] = []
+    preprocessors: list[PreProcessBase] | None = None
 
     def __init__(self):
         self.mapping_app = config.APP

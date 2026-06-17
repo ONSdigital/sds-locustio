@@ -5,7 +5,7 @@ from postprocess.postprocess_result_evaluator import PostProcessResultEvaluator
 
 
 class PostprocessMapper:
-    postprocessors: list[PostProcessBase] = []
+    postprocessors: list[PostProcessBase] | None = None
 
     def __init__(self):
         self.mapping_app = config.APP

@@ -4,9 +4,9 @@ from preprocess.preprocess_sds_schema import PreProcessSDSSchema
 
 
 class RuntimeConfig:
-    DATASET_ID = "UNASSIGNED"  # To be set during initiation
-    SCHEMA_GUID = "UNASSIGNED"  # To be set during initiation
-    HEADER = {}  # To be set during initiation
+    DATASET_ID: str = "UNASSIGNED"  # To be set during initiation
+    SCHEMA_GUID: str = "UNASSIGNED"  # To be set during initiation
+    HEADER: dict[str,str] | None = None  # To be set during initiation
 
     def set_config_from_preprocessors(self, preprocessors: list[PreProcessBase]):
         for preprocessor in preprocessors:

@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 
 from configs.endpoints_config import EndpointConfig
 from configs.runtime_config import RuntimeConfig
@@ -10,9 +11,9 @@ class LocustTestsFactory:
     def __init__(self, endpoint_configs: dict[str, EndpointConfig]):
         self.endpoint_configs = endpoint_configs
 
-    def populate_locust_tasks(self, runtime_config: RuntimeConfig) -> list:
+    def populate_locust_tasks(self, runtime_config: RuntimeConfig) -> list[Callable]:
         locust_tasks = []
-        for endpoint_name in self.endpoint_configs.keys():
+        for endpoint_name in self.endpoint_configs:
             logger.info(f"Creating test method for endpoint: {endpoint_name}")
 
             # Closure function to create a test method for an endpoint

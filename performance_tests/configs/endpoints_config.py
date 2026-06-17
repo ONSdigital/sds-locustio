@@ -144,8 +144,8 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
 
 ALL_ENDPOINTS: dict[str, EndpointConfig] = {**SDS_ENDPOINTS, **CIR_ENDPOINTS}
 
-SDS_ENDPOINTS_CHOICE: list = ["all"] + list(SDS_ENDPOINTS.keys())
-CIR_ENDPOINTS_CHOICE: list = ["all"] + list(CIR_ENDPOINTS.keys())
+SDS_ENDPOINTS_CHOICE: list = ["all", *list(SDS_ENDPOINTS.keys())]
+CIR_ENDPOINTS_CHOICE: list = ["all", *list(CIR_ENDPOINTS.keys())]
 
 SDS_ENDPOINTS_DEFAULT: str = GET_UNIT_DATA
 CIR_ENDPOINTS_DEFAULT: str = GET_CI_METADATA

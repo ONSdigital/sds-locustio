@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 from typing import Final
 
 import gevent
@@ -97,9 +98,9 @@ def on_test_quitting(environment, **kwargs):
 
 
 class PerformanceTests(FastHttpUser):
-    wait_time = between(0.05, 0.1)
-    tasks = [] # Tasks will be populated dynamically
-    host = config.BASE_URL # Required by Locust
+    wait_time: float = between(0.05, 0.1)
+    tasks: list[Callable] | None = None # Tasks will be populated dynamically
+    host: str = config.BASE_URL # Required by Locust
     endpoint_configs: dict[str, EndpointConfig] # Endpoint configurations for the selected endpoints to be tested
     endpoint_helpers: EndpointsHelpers
     locust_tests_factory: LocustTestsFactory

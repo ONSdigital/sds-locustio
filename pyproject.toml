@@ -77,11 +77,11 @@ ignore = [
     # random digit generation is used in some places and is not a security concern
     "S311",
     # temporary allow global statement
-    "PLW0603"
-
-    # SDS SPECIFIC BELOW THIS LINE
-    # Function call as default argument
-#    "B008",
+    "PLW0603",
+    # allow function to have more than 5 arguments
+    "PLR0913",
+    # allow more than 6 return statements in a function
+    "PLR0911",
 ]
 
 [tool.ruff.lint.pydocstyle]

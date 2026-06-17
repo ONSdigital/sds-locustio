@@ -2,9 +2,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from locust.runners import WorkerRunner
-
 from configs.config import config
+from locust.runners import WorkerRunner
 
 
 class PreProcessBase(ABC):
