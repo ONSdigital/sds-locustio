@@ -1,7 +1,8 @@
 from logging import Logger
 from typing import NotRequired, TypedDict
 
-from result_evaluation.anomalies import ANOMALIES, AVG_RESPONSE_TIME_EXCEEDED_ANOMALY, FAIL_RATIO_EXCEEDED_ANOMALY, Anomaly
+from performance_tests.result_evaluation.anomalies import (
+    ANOMALIES, AVG_RESPONSE_TIME_EXCEEDED_ANOMALY, FAIL_RATIO_EXCEEDED_ANOMALY, Anomaly)
 
 
 class EvaluationResult(TypedDict):

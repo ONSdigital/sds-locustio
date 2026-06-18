@@ -1,8 +1,8 @@
-from configs.config import App, config
-from preprocess.preprocess_base import PreProcessBase
-from preprocess.preprocess_cir_schema import PreProcessCIRSchema
-from preprocess.preprocess_sds_dataset import PreProcessSDSDataset
-from preprocess.preprocess_sds_schema import PreProcessSDSSchema
+from performance_tests.configs.config import App, config
+from performance_tests.preprocess.preprocess_base import PreProcessBase
+from performance_tests.preprocess.preprocess_cir_schema import PreProcessCIRSchema
+from performance_tests.preprocess.preprocess_sds_dataset import PreProcessSDSDataset
+from performance_tests.preprocess.preprocess_sds_schema import PreProcessSDSSchema
 
 
 class PreprocessMapper:

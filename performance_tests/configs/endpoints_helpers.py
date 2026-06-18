@@ -1,11 +1,11 @@
 from urllib.parse import urlencode
 
-from configs.config import config
-from configs.endpoints_config import RUNTIME_DATASET_ID_PLACEHOLDER, RUNTIME_SCHEMA_ID_PLACEHOLDER, EndpointConfig
-from configs.runtime_config import RuntimeConfig
+from performance_tests.configs.config import config
+from performance_tests.configs.endpoints_config import RUNTIME_DATASET_ID_PLACEHOLDER, RUNTIME_SCHEMA_ID_PLACEHOLDER, EndpointConfig
+from performance_tests.configs.runtime_config import RuntimeConfig
 from locust.clients import ResponseContextManager
 from locust.contrib.fasthttp import FastHttpSession, FastResponse
-from locust_helper import LocustHelper
+from performance_tests.locust_helper import LocustHelper
 
 locust_helper = LocustHelper()
 

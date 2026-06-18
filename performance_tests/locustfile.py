@@ -3,16 +3,16 @@ from collections.abc import Callable
 from typing import Final
 
 import gevent
-from configs.config import App, config
-from configs.endpoints_config import ENDPOINTS_CONFIG, EndpointConfig
-from configs.endpoints_helpers import EndpointsHelpers
-from configs.runtime_config import RuntimeConfig
+from performance_tests.configs.config import App, config
+from performance_tests.configs.endpoints_config import ENDPOINTS_CONFIG, EndpointConfig
+from performance_tests.configs.endpoints_helpers import EndpointsHelpers
+from performance_tests.configs.runtime_config import RuntimeConfig
 from locust import FastHttpUser, between, events
 from locust.runners import MasterRunner
-from locust_helper import LocustHelper
-from locust_tests_factory import LocustTestsFactory
-from postprocess.postprocess_mapper import PostprocessMapper
-from preprocess.preprocess_mapper import PreprocessMapper
+from performance_tests.locust_helper import LocustHelper
+from performance_tests.locust_tests_factory import LocustTestsFactory
+from performance_tests.postprocess.postprocess_mapper import PostprocessMapper
+from performance_tests.preprocess.preprocess_mapper import PreprocessMapper
 
 logger = logging.getLogger(__name__)
 

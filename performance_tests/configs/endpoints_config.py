@@ -1,7 +1,7 @@
 from typing import TypedDict
 
-from configs import endpoints_func
-from configs.config import App, config
+from performance_tests.configs import endpoints_func
+from performance_tests.configs.config import App, config
 
 
 class EndpointConfig(TypedDict):

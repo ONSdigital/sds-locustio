@@ -1,8 +1,8 @@
-from configs.endpoints_config import ALL_ENDPOINTS
-from locust_helper import LocustHelper
-from postprocess.postprocess_base import PostProcessBase
-from result_evaluation.result_evaluator import EvaluationResult, ResultEvaluator
-from result_evaluation.thresholds import THRESHOLDS_AVG_RESPONSE_TIME, THRESHOLDS_FAIL_RATIO
+from performance_tests.configs.endpoints_config import ALL_ENDPOINTS
+from performance_tests.locust_helper import LocustHelper
+from performance_tests.postprocess.postprocess_base import PostProcessBase
+from performance_tests.result_evaluation.result_evaluator import EvaluationResult, ResultEvaluator
+from performance_tests.result_evaluation.thresholds import THRESHOLDS_AVG_RESPONSE_TIME, THRESHOLDS_FAIL_RATIO
 
 
 class PostProcessResultEvaluator(PostProcessBase):
@@ -17,7 +17,7 @@ class PostProcessResultEvaluator(PostProcessBase):
         )
         self.endpoint_configs = ALL_ENDPOINTS
 
-    def postprocess_master(self) -> None:
+    def postprocess_master(self) -> int:
 
         self.logger.info("Begin test result evaluation...")
 
@@ -56,7 +56,7 @@ class PostProcessResultEvaluator(PostProcessBase):
 
         return self.success("Successfully analysed test result.")
 
-    def postprocess_worker(self) -> None:
+    def postprocess_worker(self) -> int:
         pass
 
     def map_endpoint_key_from_environment_name_and_method(self, endpoint_name: str, endpoint_method: str) -> str | None:

@@ -1,8 +1,8 @@
 import logging
 from collections.abc import Callable
 
-from configs.endpoints_config import EndpointConfig
-from configs.runtime_config import RuntimeConfig
+from performance_tests.configs.endpoints_config import EndpointConfig
+from performance_tests.configs.runtime_config import RuntimeConfig
 
 logger = logging.getLogger(__name__)
 

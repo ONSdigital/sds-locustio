@@ -1,6 +1,6 @@
-from configs.config import config
-from locust_helper import LocustHelper
-from postprocess.postprocess_base import PostProcessBase
+from performance_tests.configs.config import config
+from performance_tests.locust_helper import LocustHelper
+from performance_tests.postprocess.postprocess_base import PostProcessBase
 
 
 class PostProcessCirDeleteSchemas(PostProcessBase):
@@ -9,7 +9,7 @@ class PostProcessCirDeleteSchemas(PostProcessBase):
         self.environment = environment
         self.locust_helper = LocustHelper()
 
-    def postprocess_master(self) -> None:
+    def postprocess_master(self) -> int:
         if self.locust_helper.delete_cir_schema_record_after_test(
                 headers=self.header,
                 base_url=config.BASE_URL,

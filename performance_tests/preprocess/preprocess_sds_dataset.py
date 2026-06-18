@@ -1,11 +1,11 @@
 from http import HTTPStatus
 
-from configs.config import config
-from json_generator import JsonGenerator
+from performance_tests.configs.config import config
+from performance_tests.json_generator import JsonGenerator
 from locust.runners import WorkerRunner
-from locust_helper import LocustHelper
-from locust_test import FIXED_IDENTIFIERS
-from preprocess.preprocess_base import PreProcessBase
+from performance_tests.locust_helper import LocustHelper
+from performance_tests.locust_test import FIXED_IDENTIFIERS
+from performance_tests.preprocess.preprocess_base import PreProcessBase
 
 
 class PreProcessSDSDataset(PreProcessBase):

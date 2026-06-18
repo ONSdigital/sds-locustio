@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from configs.config import config
+from performance_tests.configs.config import config
 from locust.runners import WorkerRunner
 
 
@@ -11,12 +11,12 @@ class PostProcessBase(ABC):
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def postprocess_master(self) -> None:
+    def postprocess_master(self) -> int:
         """Post-process the data for the test for master node"""
         pass
 
     @abstractmethod
-    def postprocess_worker(self) -> None:
+    def postprocess_worker(self) -> int:
         """Post-process the data for the test for worker nodes"""
         pass
 

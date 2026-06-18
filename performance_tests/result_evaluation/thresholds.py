@@ -1,4 +1,4 @@
-from configs.endpoints_config import (
+from performance_tests.configs.endpoints_config import (
     GET_CI_METADATA,
     GET_CI_SCHEMA,
     GET_DATASET_METADATA,

@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from configs.config import config
+from performance_tests.configs.config import config
 from locust.runners import WorkerRunner
 
 
@@ -12,12 +12,12 @@ class PreProcessBase(ABC):
     logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def preprocess_master(self) -> None:
+    def preprocess_master(self) -> int:
         """Pre-process the data for the test for master node"""
         pass
 
     @abstractmethod
-    def preprocess_worker(self) -> None:
+    def preprocess_worker(self) -> int:
         """Pre-process the data for the test for worker nodes"""
         pass
 

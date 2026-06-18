@@ -1,7 +1,7 @@
-from configs.config import App, config
-from postprocess.postprocess_base import PostProcessBase
-from postprocess.postprocess_cir_delete_schemas import PostProcessCirDeleteSchemas
-from postprocess.postprocess_result_evaluator import PostProcessResultEvaluator
+from performance_tests.configs.config import App, config
+from performance_tests.postprocess.postprocess_base import PostProcessBase
+from performance_tests.postprocess.postprocess_cir_delete_schemas import PostProcessCirDeleteSchemas
+from performance_tests.postprocess.postprocess_result_evaluator import PostProcessResultEvaluator
 
 
 class PostprocessMapper:

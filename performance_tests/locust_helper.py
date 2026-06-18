@@ -8,7 +8,7 @@ from http import HTTPStatus
 
 import google.oauth2.id_token
 import requests
-from configs.config import config
+from performance_tests.configs.config import config
 from google.cloud import exceptions, storage
 from google.cloud.storage import Bucket
 
