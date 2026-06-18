@@ -3,13 +3,14 @@ from collections.abc import Callable
 from typing import Final
 
 import gevent
+from locust import FastHttpUser, between, events
+from locust.env import Environment
+from locust.runners import MasterRunner
+
 from performance_tests.configs.config import App, config
 from performance_tests.configs.endpoints_config import ENDPOINTS_CONFIG, EndpointConfig
 from performance_tests.configs.endpoints_helpers import EndpointsHelpers
 from performance_tests.configs.runtime_config import RuntimeConfig
-from locust import FastHttpUser, between, events
-from locust.env import Environment
-from locust.runners import MasterRunner
 from performance_tests.locust_helper import LocustHelper
 from performance_tests.locust_tests_factory import LocustTestsFactory
 from performance_tests.postprocess.postprocess_mapper import PostprocessMapper

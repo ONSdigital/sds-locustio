@@ -1,10 +1,10 @@
 from http import HTTPStatus
 
 from locust.env import Environment
+from locust.runners import WorkerRunner
 
 from performance_tests.configs.config import config
 from performance_tests.json_generator import JsonGenerator
-from locust.runners import WorkerRunner
 from performance_tests.locust_helper import LocustHelper
 from performance_tests.locust_test import FIXED_IDENTIFIERS
 from performance_tests.preprocess.preprocess_base import PreProcessBase

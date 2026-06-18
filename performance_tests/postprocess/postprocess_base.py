@@ -2,9 +2,9 @@ import logging
 from abc import ABC, abstractmethod
 
 from locust.env import Environment
+from locust.runners import WorkerRunner
 
 from performance_tests.configs.config import config
-from locust.runners import WorkerRunner
 
 
 class PostProcessBase(ABC):

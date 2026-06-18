@@ -1,7 +1,6 @@
 from locust.env import Environment
 
 from performance_tests.configs.endpoints_config import ALL_ENDPOINTS
-from performance_tests.locust_helper import LocustHelper
 from performance_tests.postprocess.postprocess_base import PostProcessBase
 from performance_tests.result_evaluation.result_evaluator import EvaluationResult, ResultEvaluator
 from performance_tests.result_evaluation.thresholds import THRESHOLDS_AVG_RESPONSE_TIME, THRESHOLDS_FAIL_RATIO
@@ -9,9 +8,7 @@ from performance_tests.result_evaluation.thresholds import THRESHOLDS_AVG_RESPON
 
 class PostProcessResultEvaluator(PostProcessBase):
     def __init__(self, header:dict, environment: Environment):
-        self.header = header
         self.environment = environment
-        self.locust_helper = LocustHelper()
         self.result_evaluator = ResultEvaluator(
             logger=self.logger,
             fail_ratio_thresholds=THRESHOLDS_FAIL_RATIO,
