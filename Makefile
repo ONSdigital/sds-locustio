@@ -10,9 +10,10 @@ LOCUST_USERS=30
 LOCUST_SPAWN_RATE=10
 LOCUST_RUN_TIME=5m
 LOCUST_CSV=locust_tasks_result/
+LOCUST_PROCESSES=-1
+# For SDS load tests only
 LOCUST_TEST_ENDPOINTS=get_unit_data
 LOCUST_DATASET_ENTRIES=1000
-LOCUST_PROCESSES=-1
 # For CIR load tests only
 LOCUST_TEST_CIR_ENDPOINTS=get_ci_schema
 
@@ -43,7 +44,7 @@ deploy-cir-locust-job:
 	gcloud run jobs update cir-locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=${PROJECT_ID}-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
 
 run-sds-locust-job:
-	gcloud run jobs execute sds-locust-tasks --region=europe-west2
+	gcloud run jobs execute locust-tasks --region=europe-west2
 
 run-cir-locust-job:
 	gcloud run jobs execute cir-locust-tasks --region=europe-west2

@@ -103,30 +103,38 @@ gcloud storage buckets create gs://$PROJECT_ID-locust-tasks-result --location=eu
 
 #### Set up the environment variables
 
-Please change the variables on the makefile according to your needs. The usage of the variables is explained in the table below:
+Please change the variables on the makefile according to your need. The usage of the variables is explained in the table below:
 
-| Var Name               | Description                                                          | Value                                                                                                                                  |
-| ---------------------- |----------------------------------------------------------------------| -------------------------------------------------------------------------------------------------------------------------------------- |
-| Locust_Headless        | A flag to enable headless mode                                       | true                                                                                                                                   |
-| Locust_Locustfile      | Location of the locust file                                          | locustfile.py                                                                                                                          |
-| Locust_Users           | Number of concurrent users                                           | User defined                                                                                                                           |
-| Locust_Spawn_Rate      | Rate to spawn users (how many seconds to spawn 1 user)               | User defined                                                                                                                           |
-| Locust_Run_Time        | Stop after the specified amount of time                              | User defined                                                                                                                           |
-| Locust_CSV             | CSV filename that store request stats                                | locust_tasks_result                                                                                                                    |
-| Locust_Test_Endpoints  | Custom parameter to select test endpoints                            | all / post_schema / get_unit_data (default)/ get_dataset_metadata / get_schema_metadata / get_schema / get_schema_v2 / get_survey_list |
-| Locust_Dataset_Entries | Custom parameter to specify number of unit data in generated dataset | 1000 (default) / User defined                                                                                                          |
+| Var Name                  | Description                                                                     | Value                            |
+|---------------------------|---------------------------------------------------------------------------------|----------------------------------|
+| Locust_Headless           | A flag to enable headless mode                                                  | true                             |
+| Locust_Locustfile         | Location of the locust file                                                     | locustfile.py                    |
+| Locust_Users              | Number of concurrent users                                                      | User defined                     |
+| Locust_Spawn_Rate         | Rate to spawn users (how many users per seconds)                                | User defined                     |
+| Locust_Run_Time           | Stop after the specified amount of time                                         | User defined                     |
+| Locust_CSV                | CSV filename that store request stats                                           | locust_tasks_result/             |
+| Locust_Processes          | Number of times to fork locust process                                          | -1 (use all available CPUs)      |
+| Locust_Test_Endpoints     | Custom parameter to select test endpoints (SDS only)                            | (please lookup endpoints_config) |
+| Locust_Dataset_Entries    | Custom parameter to specify number of unit data in generated dataset (SDS only) | 1000 (default) / User defined    |
+| Locust_Test_Endpoints_CIR | Custom parameter to select test endpoints (CIR only)                            | (please lookup endpoints_config) |
 
 
 #### Build and deploy locust performance testing in headless mode
 
 ```bash
-make deploy-locust-job
+make deploy-sds-locust-job
+```
+```bash
+make deploy-cir-locust-job
 ```
 
 #### Run locust performance testing in headless mode
 
 ```bash
-make run-locust-job
+make run-sds-locust-job
+```
+```bash
+make run-cir-locust-job
 ```
 
-When locust job is completed, the test result will be stored in the bucket created above with the name format `{PROJECT_ID}-locust-tasks-result/{DATESTAMP}/result_stats.csv`
+When locust job is completed, the test result will be stored in the bucket created above with the name format `{PROJECT_ID}-locust-tasks-result/{APP}/{DATESTAMP}/result_stats.csv`
