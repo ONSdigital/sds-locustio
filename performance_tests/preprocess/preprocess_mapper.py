@@ -1,3 +1,5 @@
+from locust.env import Environment
+
 from performance_tests.configs.config import App, config
 from performance_tests.preprocess.preprocess_base import PreProcessBase
 from performance_tests.preprocess.preprocess_cir_schema import PreProcessCIRSchema
@@ -11,7 +13,7 @@ class PreprocessMapper:
     def __init__(self):
         self.mapping_app = config.APP
 
-    def initiate_preprocessors(self, header: dict, environment) -> list[PreProcessBase]:
+    def initiate_preprocessors(self, header: dict, environment: Environment) -> list[PreProcessBase]:
         if self.mapping_app == App.SDS:
             # For SDS, we need to preprocess both Schema and Dataset
             preprocessors_list = [PreProcessSDSSchema, PreProcessSDSDataset]

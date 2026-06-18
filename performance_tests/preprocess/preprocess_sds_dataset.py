@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from locust.env import Environment
+
 from performance_tests.configs.config import config
 from performance_tests.json_generator import JsonGenerator
 from locust.runners import WorkerRunner
@@ -12,7 +14,7 @@ class PreProcessSDSDataset(PreProcessBase):
     dataset_bucket_name = f"{config.PROJECT_ID}-sds-europe-west2-dataset"
     dataset_id = None
 
-    def __init__(self, header: dict, environment):
+    def __init__(self, header: dict, environment: Environment):
         self.header = header
         self.environment = environment
         self.worker_index = environment.runner.worker_index if isinstance(environment.runner, WorkerRunner) else None

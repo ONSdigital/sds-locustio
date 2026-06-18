@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from locust.env import Environment
+
 from performance_tests.configs.config import config
 from locust.runners import WorkerRunner
 from performance_tests.locust_helper import LocustHelper
@@ -9,7 +11,7 @@ from performance_tests.preprocess.preprocess_base import PreProcessBase
 class PreProcessSDSSchema(PreProcessBase):
     schema_guid = None
 
-    def __init__(self, header: dict, environment):
+    def __init__(self, header: dict, environment: Environment):
         self.header = header
         self.environment = environment
         self.worker_index = environment.runner.worker_index if isinstance(environment.runner, WorkerRunner) else None

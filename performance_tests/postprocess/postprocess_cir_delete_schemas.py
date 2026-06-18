@@ -1,10 +1,12 @@
+from locust.env import Environment
+
 from performance_tests.configs.config import config
 from performance_tests.locust_helper import LocustHelper
 from performance_tests.postprocess.postprocess_base import PostProcessBase
 
 
 class PostProcessCirDeleteSchemas(PostProcessBase):
-    def __init__(self, header:dict, environment):
+    def __init__(self, header:dict, environment: Environment):
         self.header = header
         self.environment = environment
         self.locust_helper = LocustHelper()

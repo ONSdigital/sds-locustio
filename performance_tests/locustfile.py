@@ -8,6 +8,7 @@ from performance_tests.configs.endpoints_config import ENDPOINTS_CONFIG, Endpoin
 from performance_tests.configs.endpoints_helpers import EndpointsHelpers
 from performance_tests.configs.runtime_config import RuntimeConfig
 from locust import FastHttpUser, between, events
+from locust.env import Environment
 from locust.runners import MasterRunner
 from performance_tests.locust_helper import LocustHelper
 from performance_tests.locust_tests_factory import LocustTestsFactory
@@ -51,7 +52,7 @@ def _(parser):
 
 
 @events.test_start.add_listener
-def on_test_start(environment, **kwargs):
+def on_test_start(environment: Environment, **kwargs):
     """
     Function to run before the test starts
     """
@@ -72,7 +73,7 @@ def on_test_start(environment, **kwargs):
 
 
 @events.quitting.add_listener
-def on_test_quitting(environment, **kwargs):
+def on_test_quitting(environment: Environment, **kwargs):
     """
     Function to run after the test ends, just before the program quits. This is a replacement of the previous
     on_stop event hook to ensure it runs after all worker nodes have definitely stopped

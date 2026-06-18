@@ -1,13 +1,14 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+
+from locust.env import Environment
 
 from performance_tests.configs.config import config
 from locust.runners import WorkerRunner
 
 
 class PostProcessBase(ABC):
-    environment: Any
+    environment: Environment
     logger = logging.getLogger(__name__)
 
     @abstractmethod

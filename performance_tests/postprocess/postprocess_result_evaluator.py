@@ -1,3 +1,5 @@
+from locust.env import Environment
+
 from performance_tests.configs.endpoints_config import ALL_ENDPOINTS
 from performance_tests.locust_helper import LocustHelper
 from performance_tests.postprocess.postprocess_base import PostProcessBase
@@ -6,7 +8,7 @@ from performance_tests.result_evaluation.thresholds import THRESHOLDS_AVG_RESPON
 
 
 class PostProcessResultEvaluator(PostProcessBase):
-    def __init__(self, header:dict, environment):
+    def __init__(self, header:dict, environment: Environment):
         self.header = header
         self.environment = environment
         self.locust_helper = LocustHelper()
@@ -20,6 +22,8 @@ class PostProcessResultEvaluator(PostProcessBase):
     def postprocess_master(self) -> int:
 
         self.logger.info("Begin test result evaluation...")
+
+        evaluation_success: bool = True
 
         # Evaluate average response time for each endpoint
         for (name, method), stats in self.environment.stats.entries.items():
@@ -38,7 +42,7 @@ class PostProcessResultEvaluator(PostProcessBase):
                 self.logger.error(f"Endpoint {name} with method {method} failed average response time evaluation. "
                                   f"Average response time: {stats.avg_response_time} ms, "
                                   f"Threshold: {threshold} ms")
-                self.environment.process_exit_code = 1
+                evaluation_success = False
 
         self.logger.info("Average response time evaluation completed.")
 
@@ -50,9 +54,14 @@ class PostProcessResultEvaluator(PostProcessBase):
         if not evaluation_result["result"]:
             self.result_evaluator.prompt_anomaly(evaluation_result)
             self.logger.error(f"Test failed due to failure ratio {total_fail_ratio} > {self.result_evaluator.get_fail_ratio_threshold()}")
-            self.environment.process_exit_code = 1
+            evaluation_success = False
 
         self.logger.info("Fail ratio evaluation completed.")
+
+        if not evaluation_success:
+            self.environment.process_exit_code = 1
+        else:
+            self.environment.process_exit_code = 0
 
         return self.success("Successfully analysed test result.")
 
