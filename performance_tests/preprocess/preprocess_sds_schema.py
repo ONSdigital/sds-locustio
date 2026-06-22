@@ -42,18 +42,16 @@ class PreProcessSDSSchema(PreProcessBase):
         )
 
     def preprocess_worker(self) -> int:
-        worker_index = self.environment.runner.worker_index
-
         self.logger.info("Retrieving schema GUID")
         schema_guid = self.locust_helper.wait_and_get_sds_schema_guid(self.header, config.BASE_URL, config.TEST_SURVEY_ID)
 
         if not schema_guid:
-            return self.error(f"Schema guid cannot be retrieved on worker {worker_index}")
+            return self.error(f"Schema guid cannot be retrieved on worker {self.worker_index}")
 
         self.schema_guid = schema_guid
         self.logger.info(f"Test schema GUID: {self.schema_guid}")
 
-        return self.success(f"SDS schema pre-processing completed successfully on worker {worker_index}")
+        return self.success(f"SDS schema pre-processing completed successfully on worker {self.worker_index}")
 
     def get_schema_guid(self) -> str:
         return self.schema_guid
