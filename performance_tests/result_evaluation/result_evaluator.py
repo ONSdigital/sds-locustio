@@ -41,7 +41,7 @@ class ResultEvaluator:
         if fail_ratio > self.get_fail_ratio_threshold():
             return EvaluationResult(result=False, anomaly=ANOMALIES.get(FAIL_RATIO_EXCEEDED_ANOMALY))
 
-        return EvaluationResult(result=True, anomaly=None)
+        return EvaluationResult(result=True)
 
     def evaluate_avg_response_time(self, endpoint: str, avg_response_time: float) -> EvaluationResult:
         """
@@ -59,7 +59,7 @@ class ResultEvaluator:
         if avg_response_time > threshold:
             return EvaluationResult(result=False, anomaly=ANOMALIES.get(AVG_RESPONSE_TIME_EXCEEDED_ANOMALY))
 
-        return EvaluationResult(result=True, anomaly=None)
+        return EvaluationResult(result=True)
 
     def get_avg_response_time_threshold(self, endpoint: str) -> int:
         """
@@ -85,7 +85,7 @@ class ResultEvaluator:
 
     def prompt_anomaly(self, evaluation_result: EvaluationResult) -> None:
         """
-        Prompt the logging of an anomaly if the evaluation result indicates an anomaly.
+        Prompt the logging of an anomaly if the evaluation result indicates an anomaly which triggers GCP alerting.
 
         Parameters:
         evaluation_result (EvaluationResult): The evaluation result to check for anomalies.

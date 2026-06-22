@@ -20,7 +20,7 @@ class PostProcessResultEvaluator(PostProcessBase):
 
         self.logger.info("Begin test result evaluation...")
 
-        evaluation_success: bool = True
+        evaluation_passed: bool = True
 
         # Evaluate average response time for each endpoint
         for (name, method), stats in self.environment.stats.entries.items():
@@ -39,7 +39,7 @@ class PostProcessResultEvaluator(PostProcessBase):
                 self.logger.error(f"Endpoint {name} with method {method} failed average response time evaluation. "
                                   f"Average response time: {stats.avg_response_time} ms, "
                                   f"Threshold: {threshold} ms")
-                evaluation_success = False
+                evaluation_passed = False
 
         self.logger.info("Average response time evaluation completed.")
 
@@ -51,11 +51,11 @@ class PostProcessResultEvaluator(PostProcessBase):
         if not evaluation_result["result"]:
             self.result_evaluator.prompt_anomaly(evaluation_result)
             self.logger.error(f"Test failed due to failure ratio {total_fail_ratio} > {self.result_evaluator.get_fail_ratio_threshold()}")
-            evaluation_success = False
+            evaluation_passed = False
 
         self.logger.info("Fail ratio evaluation completed.")
 
-        if not evaluation_success:
+        if not evaluation_passed:
             self.environment.process_exit_code = 1
         else:
             self.environment.process_exit_code = 0

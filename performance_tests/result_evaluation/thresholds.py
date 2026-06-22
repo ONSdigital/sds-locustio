@@ -11,6 +11,8 @@ from performance_tests.configs.endpoints_config import (
     PUT_VALIDATOR_VERSION,
 )
 
+# Maximum average response time thresholds for each endpoint in milliseconds.
+# If an endpoint is not listed, the default threshold will be applied.
 THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
     GET_SCHEMA_METADATA: 500,
     GET_SCHEMA: 500,
