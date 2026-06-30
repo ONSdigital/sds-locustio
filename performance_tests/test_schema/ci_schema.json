@@ -1,0 +1,232 @@
+{
+  "data_version": "0.0.3",
+  "language": "<locust_language>",
+  "survey_id": "<locust_survey_id>",
+  "title": "Test CI Schema",
+  "form_type": "<locust_form_type>",
+  "legal_basis": "Notice is given under section 1 of the Statistics of Trade Act 1947.",
+  "metadata": [
+    {
+      "name": "ru_ref",
+      "type": "string"
+    },
+    {
+      "name": "ru_name",
+      "type": "string"
+    },
+    {
+      "name": "trad_as",
+      "type": "string",
+      "optional": true
+    },
+    {
+      "name": "period_id",
+      "type": "string"
+    },
+    {
+      "name": "user_id",
+      "type": "string"
+    },
+    {
+      "name": "ref_p_start_date",
+      "type": "date"
+    },
+    {
+      "name": "ref_p_end_date",
+      "type": "date"
+    }
+  ],
+  "mime_type": "application/json/ons/eq",
+  "navigation": {
+    "visible": false
+  },
+  "questionnaire_flow": {
+    "type": "Linear",
+    "options": {}
+  },
+  "post_submission": {
+    "feedback": true,
+    "view_response": true,
+    "guidance": {
+      "contents": [
+        {
+          "description": "Your response will help inform decision-makers how best to support the UK population and economy at this challenging time."
+        },
+        {
+          "description": "<a href=\"https://www.ons.gov.uk/surveys\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more about how we use this data</a>"
+        }
+      ]
+    }
+  },
+  "sds_schema": "",
+  "sections": [
+    {
+      "id": "de518a42-820c-487a-a4a4-4fecdcdeab3e",
+      "summary": {
+        "show_on_completion": false,
+        "collapsible": false
+      },
+      "show_on_hub": true,
+      "groups": [
+        {
+          "id": "group3b067398-cbe2-4dbd-b88d-986b597cbfd4",
+          "title": "Introduction",
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "Introduction",
+              "primary_content": [
+                {
+                  "id": "primary",
+                  "title": {
+                    "text": "You are completing this for {ru_name} {trad_as}",
+                    "placeholders": [
+                      {
+                        "placeholder": "ru_name",
+                        "value": {
+                          "source": "metadata",
+                          "identifier": "ru_name"
+                        }
+                      },
+                      {
+                        "placeholder": "trad_as",
+                        "transforms": [
+                          {
+                            "transform": "conditional_trad_as",
+                            "arguments": {
+                              "trad_as": {
+                                "source": "metadata",
+                                "identifier": "trad_as"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "contents": [
+                    {
+                      "description": {
+                        "text": "If the company details or structure have changed contact us on {telephone_number_link} or email {email_link}",
+                        "placeholders": [
+                          {
+                            "placeholder": "telephone_number_link",
+                            "transforms": [
+                              {
+                                "transform": "telephone_number_link",
+                                "arguments": {
+                                  "telephone_number": "0300 1234 931"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "placeholder": "email_link",
+                            "transforms": [
+                              {
+                                "transform": "email_link",
+                                "arguments": {
+                                  "email_address": "surveys@ons.gov.uk",
+                                  "email_subject": "Change of details",
+                                  "email_subject_append": {
+                                    "identifier": "ru_ref",
+                                    "source": "metadata"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "description",
+                  "contents": [
+                    {
+                      "list": [
+                        "Data should relate to all sites in England, Scotland, Wales and Northern Ireland unless otherwise stated.",
+                        "You can provide info estimates if actual figures are not available.",
+                        "We will treat your data securely and confidentially."
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "preview_content": {
+                "id": "preview",
+                "title": "Information you need",
+                "contents": [
+                  {
+                    "description": "You can select the dates of the period you are reporting for, if the given dates are not appropriate."
+                  },
+                  {
+                    "list": [
+                      "Hello me",
+                      "This is ok",
+                      "Wooo"
+                    ]
+                  },
+                  {
+                    "list": [
+                      "dfgdf"
+                    ]
+                  }
+                ],
+                "questions": []
+              },
+              "secondary_content": [
+                {
+                  "id": "secondary-content",
+                  "contents": [
+                    {
+                      "title": "How we use your data"
+                    },
+                    {
+                      "list": [
+                        "You cannot appeal your selection. Your business was selected to give us a comprehensive view of the UK economy.",
+                        "The information you provide contributes to Gross Domestic Product (GDP)."
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "groupde518a42-820c-487a-a4a4-4fecdcdeab3e",
+          "blocks": [
+            {
+              "id": "p1",
+              "type": "Question",
+              "question": {
+                "id": "questionp1",
+                "title": "name",
+                "type": "General",
+                "answers": [
+                  {
+                    "id": "answer380d573c-a121-49d0-80db-809c3e012cf0",
+                    "mandatory": false,
+                    "type": "Number",
+                    "label": "test",
+                    "decimal_places": 0
+                  }
+                ]
+              },
+              "page_title": "p1"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "submission": {
+    "button": "Submit",
+    "title": "Check your answers and submit",
+    "warning": "You must submit this survey to complete it",
+    "guidance": "You will have the opportunity to view, save or print a copy of your answers after submitting this survey."
+  },
+  "theme": "business"
+}

@@ -1,0 +1,30 @@
+from performance_tests.configs.endpoints_config import (
+    GET_CI_METADATA,
+    GET_CI_SCHEMA,
+    GET_DATASET_METADATA,
+    GET_SCHEMA,
+    GET_SCHEMA_METADATA,
+    GET_SCHEMA_V2,
+    GET_SURVEY_LIST,
+    GET_UNIT_DATA,
+    POST_CI,
+    PUT_VALIDATOR_VERSION,
+)
+
+# Maximum average response time thresholds for each endpoint in milliseconds.
+# If an endpoint is not listed, the default threshold will be applied.
+THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
+    GET_SCHEMA_METADATA: 500,
+    GET_SCHEMA: 500,
+    GET_SCHEMA_V2: 500,
+    GET_DATASET_METADATA: 200,
+    GET_UNIT_DATA: 100,
+    GET_SURVEY_LIST: 500,
+    POST_CI: 500,
+    GET_CI_METADATA: 500,
+    GET_CI_SCHEMA: 500,
+    PUT_VALIDATOR_VERSION: 500,
+    "default": 500,
+}
+
+THRESHOLDS_FAIL_RATIO: float = 0.01 # 1% fail ratio threshold for all endpoints

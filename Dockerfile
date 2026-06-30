@@ -20,7 +20,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
-ADD performance_tests /app
+ADD . /app
 RUN uv sync --frozen --no-dev
 
 # Expose the required Locust ports
@@ -31,7 +31,7 @@ EXPOSE 5557 5558 8089
 RUN apk add --no-cache bash
 
 # Set script to be executable
-RUN chmod 755 /app/run.sh
+RUN chmod 755 /app/performance_tests/run.sh
 
 # Start Locust using LOCUS_OPTS environment variable
-ENTRYPOINT ["/app/run.sh"]
+ENTRYPOINT ["/app/performance_tests/run.sh"]

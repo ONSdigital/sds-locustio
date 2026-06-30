@@ -20,7 +20,7 @@ steps:
         docker push "europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest"
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "Deploy locust"
+    id: "Deploy locust job for SDS"
     entrypoint: sh
     args:
       - "-c"
@@ -30,7 +30,22 @@ steps:
         --region europe-west2 \
         --cpu=${_CPU} \
         --memory=${_MEMORY} \
-        --set-env-vars=PROJECT_ID=${PROJECT_ID},BASE_URL=${_BASE_URL},OAUTH_CLIENT_ID=${_OAUTH_CLIENT_ID},LOCUST_HEADLESS=${_LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${_LOCUST_LOCUSTFILE},LOCUST_USERS=${_LOCUST_USERS},LOCUST_SPAWN_RATE=${_LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${_LOCUST_RUN_TIME},LOCUST_CSV=${_LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${_LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${_LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${_LOCUST_PROCESSES} \
+        --set-env-vars=APP=sds,PROJECT_ID=${PROJECT_ID},BASE_URL=${_BASE_URL},OAUTH_CLIENT_ID=${_OAUTH_CLIENT_ID},LOCUST_HEADLESS=${_LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${_LOCUST_LOCUSTFILE},LOCUST_USERS=${_LOCUST_USERS},LOCUST_SPAWN_RATE=${_LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${_LOCUST_RUN_TIME},LOCUST_CSV=${_LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${_LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${_LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${_LOCUST_PROCESSES} \
+        --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com \
+        --max-retries=0
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "Deploy locust job for CIR"
+    entrypoint: sh
+    args:
+      - "-c"
+      - |
+        gcloud run jobs deploy cir-locust-tasks \
+        --image europe-west2-docker.pkg.dev/${PROJECT_ID}/locust-tasks/locust-tasks:latest \
+        --region europe-west2 \
+        --cpu=${_CPU} \
+        --memory=${_MEMORY} \
+        --set-env-vars=APP=cir,PROJECT_ID=${PROJECT_ID},BASE_URL=${_BASE_URL_CIR},OAUTH_CLIENT_ID=${_OAUTH_CLIENT_ID},LOCUST_HEADLESS=${_LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${_LOCUST_LOCUSTFILE},LOCUST_USERS=${_LOCUST_USERS},LOCUST_SPAWN_RATE=${_LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${_LOCUST_RUN_TIME},LOCUST_CSV=${_LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${_LOCUST_TEST_ENDPOINTS_CIR},LOCUST_PROCESSES=${_LOCUST_PROCESSES} \
         --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com \
         --max-retries=0
 
