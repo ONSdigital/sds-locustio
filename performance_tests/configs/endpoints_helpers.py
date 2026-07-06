@@ -9,7 +9,7 @@ from performance_tests.configs.endpoints_config import (
     RUNTIME_SCHEMA_ID_PLACEHOLDER,
     EndpointConfig,
 )
-from performance_tests.configs.runtime_config import RuntimeConfig
+from performance_tests.configs.runtime_config import RuntimeConfig, RequestConfig
 from performance_tests.locust_helper import LocustHelper
 
 locust_helper = LocustHelper()
@@ -85,24 +85,39 @@ class EndpointsHelpers:
 
     def send_request(self, client: FastHttpSession, endpoint_name: str, runtime_config: RuntimeConfig) -> ResponseContextManager | FastResponse:
         """Send a request to the given URL using the specified HTTP method and headers"""
-        method = self.get_endpoint_method(endpoint_name)
-        params = self.get_endpoint_params(endpoint_name)
+        if not runtime_config.REQUEST_CONFIG:
 
-        group_name = self.get_endpoint_group_name(endpoint_name)
-        if group_name:
-            group_name = f"{config.BASE_URL}{group_name}"
+            method = self.get_endpoint_method(endpoint_name)
+            params = self.get_endpoint_params(endpoint_name)
 
-        mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
-        processed_params = self.generate_params_value_from_endpoints_func(mapped_params) if mapped_params else None
-        full_url = self.generate_full_url(endpoint_name, params=processed_params)
+            group_name = self.get_endpoint_group_name(endpoint_name)
+            if group_name:
+                group_name = f"{config.BASE_URL}{group_name}"
 
-        # Load and map payload if it exists for the endpoint
-        payload = self.get_endpoint_payload(endpoint_name)
-        if payload:
-            payload_json = locust_helper.load_json(payload)
-            payload = locust_helper.map_schema_payload(payload_json)
+            mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
+            processed_params = self.generate_params_value_from_endpoints_func(mapped_params) if mapped_params else None
+            full_url = self.generate_full_url(endpoint_name, params=processed_params)
 
-        return client.request(method=method, url=full_url, headers=runtime_config.HEADER, name=group_name, json=payload)
+            # Load and map payload if it exists for the endpoint
+            payload = self.get_endpoint_payload(endpoint_name)
+            if payload:
+                payload_json = locust_helper.load_json(payload)
+                payload = locust_helper.map_schema_payload(payload_json)
+
+            runtime_config.REQUEST_CONFIG = RequestConfig(
+                full_url=full_url,
+                method=method,
+                group_name=group_name,
+                payload=payload
+            )
+
+        return client.request(
+            method=runtime_config.REQUEST_CONFIG.method,
+            url=runtime_config.REQUEST_CONFIG.full_url,
+            headers=runtime_config.HEADER,
+            name=runtime_config.REQUEST_CONFIG.group_name,
+            json=runtime_config.REQUEST_CONFIG.payload
+        )
 
     @staticmethod
     def generate_params_value_from_endpoints_func(params: dict[str, str | dict]) -> dict[str, str]:
