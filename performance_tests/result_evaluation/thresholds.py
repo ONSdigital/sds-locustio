@@ -28,3 +28,5 @@ THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
 }
 
 THRESHOLDS_FAIL_RATIO: float = 0.01 # 1% fail ratio threshold for all endpoints
+
+THRESHOLDS_REQUEST_COUNT: int = 1 # Minimum request count threshold for all endpoints

@@ -88,9 +88,12 @@ def on_test_quitting(environment: Environment, **kwargs):
         environment=environment
     )
 
+    logger.info("Waiting all worker users to quit...")
+
     # If master node, wait for all users to finish executing before proceeding with post-processing
     if not config.HEADLESS_MODE or isinstance(environment.runner, MasterRunner):
         while environment.runner.user_count > 0:
+            logger.info(f"Worker pending to quit: {environment.runner.user_count}")
             gevent.sleep(0.5)
 
     logger.info("All users have finished executing. Proceeding with post-processing.")

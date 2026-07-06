@@ -17,30 +17,17 @@ LOCUST_DATASET_ENTRIES=1000
 # For CIR load tests only
 LOCUST_TEST_CIR_ENDPOINTS=get_ci_schema
 
-deploy-sds-locust-service:
-	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest .
-	gcloud run deploy locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest --set-env-vars=APP=sds,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SDS_SANDBOX_IP_ADDRESS}.nip.io,LOCUST_HEADLESS=false,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID} --region=europe-west2 --port=8089 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
 
-deploy-cir-locust-service:
-	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest .
-	gcloud run deploy cir-locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest --set-env-vars=APP=cir,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${CIR_SANDBOX_IP_ADDRESS}.nip.io,LOCUST_HEADLESS=false,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID} --region=europe-west2 --port=8089 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --no-allow-unauthenticated --min-instances=0 --max-instances=10 --cpu=8 --memory=32Gi
-
-# Cloud Run Admin role to user account is required to run the following command successfully.
-run-sds-locust-cloud:
-	gcloud run services proxy locust-tasks --project ${PROJECT_ID} --region europe-west2
-
-run-cir-locust-cloud:
-	gcloud run services proxy cir-locust-tasks --project ${PROJECT_ID} --region europe-west2
+build-locust-image:
+	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/apps/locust-tasks:latest .
 
 # Bucket with the name format `{PROJECT_ID}-locust-tasks-result` has to be created beforehand for the following command to run successfully.
 deploy-sds-locust-job:
-	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest .
-	gcloud run jobs deploy locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/sds/locust-tasks:latest --set-env-vars=APP=sds,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SDS_SANDBOX_IP_ADDRESS}.nip.io,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID},LOCUST_HEADLESS=${LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${LOCUST_LOCUSTFILE},LOCUST_USERS=${LOCUST_USERS},LOCUST_SPAWN_RATE=${LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${LOCUST_RUN_TIME},LOCUST_CSV=${LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${LOCUST_PROCESSES} --region=europe-west2 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --task-timeout=300m
-	gcloud run jobs update locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=${PROJECT_ID}-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
+	gcloud run jobs deploy sds-locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/apps/locust-tasks:latest --set-env-vars=APP=sds,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${SDS_SANDBOX_IP_ADDRESS}.nip.io,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID},LOCUST_HEADLESS=${LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${LOCUST_LOCUSTFILE},LOCUST_USERS=${LOCUST_USERS},LOCUST_SPAWN_RATE=${LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${LOCUST_RUN_TIME},LOCUST_CSV=${LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${LOCUST_TEST_ENDPOINTS},LOCUST_DATASET_ENTRIES=${LOCUST_DATASET_ENTRIES},LOCUST_PROCESSES=${LOCUST_PROCESSES} --region=europe-west2 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --task-timeout=300m
+	gcloud run jobs update sds-locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=${PROJECT_ID}-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
 
 deploy-cir-locust-job:
-	gcloud builds submit --tag europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest .
-	gcloud run jobs deploy cir-locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/cir/cir-locust-tasks:latest --set-env-vars=APP=cir,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${CIR_SANDBOX_IP_ADDRESS}.nip.io,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID},LOCUST_HEADLESS=${LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${LOCUST_LOCUSTFILE},LOCUST_USERS=${LOCUST_USERS},LOCUST_SPAWN_RATE=${LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${LOCUST_RUN_TIME},LOCUST_CSV=${LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${LOCUST_TEST_CIR_ENDPOINTS},LOCUST_PROCESSES=${LOCUST_PROCESSES} --region=europe-west2 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --task-timeout=300m
+	gcloud run jobs deploy cir-locust-tasks --image=europe-west2-docker.pkg.dev/${PROJECT_ID}/apps/locust-tasks:latest --set-env-vars=APP=cir,PROJECT_ID=${PROJECT_ID},BASE_URL=https://${CIR_SANDBOX_IP_ADDRESS}.nip.io,OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID},LOCUST_HEADLESS=${LOCUST_HEADLESS},LOCUST_LOCUSTFILE=${LOCUST_LOCUSTFILE},LOCUST_USERS=${LOCUST_USERS},LOCUST_SPAWN_RATE=${LOCUST_SPAWN_RATE},LOCUST_RUN_TIME=${LOCUST_RUN_TIME},LOCUST_CSV=${LOCUST_CSV},LOCUST_TEST_ENDPOINTS=${LOCUST_TEST_CIR_ENDPOINTS},LOCUST_PROCESSES=${LOCUST_PROCESSES} --region=europe-west2 --service-account=locustrun@${PROJECT_ID}.iam.gserviceaccount.com --max-retries=0 --cpu=8 --memory=32Gi --task-timeout=300m
 	gcloud run jobs update cir-locust-tasks --add-volume name=volumne_1,type=cloud-storage,bucket=${PROJECT_ID}-locust-tasks-result --add-volume-mount volume=volumne_1,mount-path=/locust_tasks_result --region=europe-west2
 
 run-sds-locust-job:
