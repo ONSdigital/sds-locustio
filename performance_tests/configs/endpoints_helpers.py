@@ -51,7 +51,7 @@ class EndpointsHelpers:
 
         return {endpoint: endpoint_config for endpoint, endpoint_config in self.endpoints.items() if endpoint in selected_endpoints}
 
-    def generate_full_url(self, endpoint_name: str, params: dict[str, str] | None) -> str:
+    def generate_full_url(self, endpoint_name: str, params: dict[str, str] | None = None) -> str:
         """Generate the URL-encoded parameters for a given endpoint name and parameters"""
         url = self.get_endpoint_url(endpoint_name)
         has_qp = self.has_query_parameters(endpoint_name)
@@ -86,16 +86,22 @@ class EndpointsHelpers:
     def send_request(self, client: FastHttpSession, endpoint_name: str, runtime_config: RuntimeConfig) -> ResponseContextManager | FastResponse:
         """Send a request to the given URL using the specified HTTP method and headers"""
 
+        # Get the endpoint method
         method = self.get_endpoint_method(endpoint_name)
-        params = self.get_endpoint_params(endpoint_name)
 
+        # Get the endpoint parameters and generate the full URL
+        params = self.get_endpoint_params(endpoint_name)
+        if params:
+            mapped_params = self.map_params_to_runtime_values(params, runtime_config)
+            processed_params = self.generate_params_value_from_endpoints_func(mapped_params)
+            full_url = self.generate_full_url(endpoint_name, params=processed_params)
+        else:
+            full_url = self.generate_full_url(endpoint_name)
+
+        # Get the endpoint group name for stat report
         group_name = self.get_endpoint_group_name(endpoint_name)
         if group_name:
             group_name = f"{config.BASE_URL}{group_name}"
-
-        mapped_params = self.map_params_to_runtime_values(params, runtime_config) if params else None
-        processed_params = self.generate_params_value_from_endpoints_func(mapped_params) if mapped_params else None
-        full_url = self.generate_full_url(endpoint_name, params=processed_params)
 
         # Load and map payload if it exists for the endpoint
         payload = self.get_endpoint_payload(endpoint_name)

@@ -117,7 +117,8 @@ class PerformanceTests(FastHttpUser):
         # Define endpoints to be tested
         self.endpoint_helpers = EndpointsHelpers(config.BASE_URL, TEST_ENDPOINTS_CONFIG["test_endpoints"])
         self.endpoint_configs = self.endpoint_helpers.get_endpoint_configs_from_selection(
-            [self.environment.parsed_options.test_endpoints]
+            #[self.environment.parsed_options.test_endpoints]
+            ["all"]
         )
 
         # Populate tasks
