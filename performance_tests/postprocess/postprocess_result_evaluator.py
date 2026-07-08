@@ -3,7 +3,11 @@ from locust.env import Environment
 from performance_tests.configs.endpoints_config import ALL_ENDPOINTS
 from performance_tests.postprocess.postprocess_base import PostProcessBase
 from performance_tests.result_evaluation.result_evaluator import EvaluationResult, ResultEvaluator
-from performance_tests.result_evaluation.thresholds import THRESHOLDS_AVG_RESPONSE_TIME, THRESHOLDS_FAIL_RATIO
+from performance_tests.result_evaluation.thresholds import (
+    THRESHOLDS_AVG_RESPONSE_TIME,
+    THRESHOLDS_FAIL_RATIO,
+    THRESHOLDS_REQUEST_COUNT,
+)
 
 
 class PostProcessResultEvaluator(PostProcessBase):
@@ -11,6 +15,7 @@ class PostProcessResultEvaluator(PostProcessBase):
         self.environment = environment
         self.result_evaluator = ResultEvaluator(
             logger=self.logger,
+            request_count_thresholds=THRESHOLDS_REQUEST_COUNT,
             fail_ratio_thresholds=THRESHOLDS_FAIL_RATIO,
             avg_response_time_thresholds=THRESHOLDS_AVG_RESPONSE_TIME
         )
@@ -21,6 +26,20 @@ class PostProcessResultEvaluator(PostProcessBase):
         self.logger.info("Begin test result evaluation...")
 
         evaluation_passed: bool = True
+
+        # Evaluate request count for each endpoint
+        total_request_count = self.environment.stats.total.num_requests
+
+        evaluation_result: EvaluationResult = self.result_evaluator.evaluate_request_count(
+            request_count=total_request_count
+        )
+
+        if not evaluation_result["result"]:
+            self.result_evaluator.prompt_anomaly(evaluation_result)
+            self.logger.error(f"Test failed due to request count {total_request_count} < {self.result_evaluator.get_request_count_threshold()}.")
+            evaluation_passed = False
+
+        self.logger.info("Request count evaluation completed.")
 
         # Evaluate average response time for each endpoint
         for (name, method), stats in self.environment.stats.entries.items():

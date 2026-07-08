@@ -8,6 +8,7 @@ class EndpointConfig(TypedDict):
     url: str # URL path of the endpoint, excluding base URL
     method: str # HTTP method (GET, POST, PUT, etc.)
     name: str # Group name to group endpoint with different parameters calling into the same test method in result
+    query_parameters: bool # Whether the endpoint requires query parameters
     params: dict[str, str | dict] | None # URL parameters to be sent with the request, with optional placeholders for runtime values
     payload: str | None # File path for the payload to be sent with the request, if applicable
 
@@ -33,39 +34,49 @@ PUT_VALIDATOR_VERSION: str = "put_validator_version"
 RUNTIME_DATASET_ID_PLACEHOLDER = "dataset_id_placeholder"
 RUNTIME_SCHEMA_ID_PLACEHOLDER = "schema_guid_placeholder"
 
+# URL placeholders
+PLACEHOLDERS: dict[str, str] = {
+    "guid": "{guid}",
+    "dataset_id": "{dataset_id}",
+    "identifier": "{identifier}",
+}
 
 SDS_ENDPOINTS: dict[str, EndpointConfig] = {
     GET_SCHEMA_METADATA: {
-        "url": "/v1/schema_metadata",
+        "url": "/schemas/metadata",
         "method": "GET",
-        "name": "/v1/schema_metadata?survey_id=[survey_id]",
+        "name": "/schemas/metadata?survey_id=[survey_id]",
+        "query_parameters": True,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
         },
         "payload": None,
     },
     GET_SCHEMA: {
-        "url": "/v1/schema",
+        "url": "/schemas",
         "method": "GET",
-        "name": "/v1/schema?survey_id=[survey_id]",
+        "name": "/schemas?survey_id=[survey_id]",
+        "query_parameters": True,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
         },
         "payload": None,
     },
     GET_SCHEMA_V2: {
-        "url": "/v2/schema",
+        "url": f"/schemas/{PLACEHOLDERS['guid']}",
         "method": "GET",
-        "name": "/v2/schema?guid=[guid]",
+        "name": f"/schemas/{PLACEHOLDERS['guid']}",
+        "query_parameters": False,
         "params": {
             "guid": RUNTIME_SCHEMA_ID_PLACEHOLDER,
         },
         "payload": None,
     },
     GET_DATASET_METADATA: {
-        "url": "/v1/dataset_metadata",
+        "url": "/datasets/metadata",
         "method": "GET",
-        "name": "/v1/dataset_metadata?survey_id=[survey_id]&period_id=[period_id]",
+        "name": "/datasets/metadata?survey_id=[survey_id]&period_id=[period_id]",
+        "query_parameters": True,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "period_id": config.TEST_PERIOD_ID,
@@ -73,9 +84,10 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
         "payload": None,
     },
     GET_UNIT_DATA: {
-        "url": "/v1/unit_data",
+        "url": f"/datasets/{PLACEHOLDERS['dataset_id']}/unit-data/{PLACEHOLDERS['identifier']}",
         "method": "GET",
-        "name": "/v1/unit_data?dataset_id=[dataset_id]&identifier=[identifier]",
+        "name": f"/datasets/{PLACEHOLDERS['dataset_id']}/unit-data/{PLACEHOLDERS['identifier']}",
+        "query_parameters": False,
         "params": {
             "dataset_id": RUNTIME_DATASET_ID_PLACEHOLDER,
             "identifier": config.TEST_UNIT_DATA_IDENTIFIER,
@@ -83,9 +95,10 @@ SDS_ENDPOINTS: dict[str, EndpointConfig] = {
         "payload": None,
     },
     GET_SURVEY_LIST: {
-        "url": "/v1/survey_list",
+        "url": "/surveys",
         "method": "GET",
-        "name": "/v1/survey_list",
+        "name": "/surveys",
+        "query_parameters": False,
         "params": None,
         "payload": None,
     }
@@ -97,6 +110,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "url": "/collection-instruments",
         "method": "POST",
         "name": "/collection-instruments?guid=[guid]&validator_version=[validator_version]",
+        "query_parameters": True,
         "params": {
             "guid": {
                 "value": config.TEST_CI_GUID,
@@ -110,6 +124,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "url": "/collection-instruments/metadata",
         "method": "GET",
         "name": "/collection-instruments/metadata?survey_id=[survey_id]&language=[language]&classifier_type=[classifier_type]&classifier_value=[classifier_value]",
+        "query_parameters": True,
         "params": {
             "survey_id": config.TEST_SURVEY_ID,
             "language": config.TEST_CI_LANGUAGE,
@@ -122,6 +137,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "url": "/collection-instruments/schema",
         "method": "GET",
         "name": "/collection-instruments/schema?guid=[guid]",
+        "query_parameters": True,
         "params": {
             "guid": config.TEST_CI_GUID,
         },
@@ -131,6 +147,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "url": "/collection-instruments/validator-version",
         "method": "PUT",
         "name": "/collection-instruments/validator-version?guid=[guid]&validator_version=[validator_version]",
+        "query_parameters": True,
         "params": {
             "guid": config.TEST_CI_GUID,
             "validator_version": {

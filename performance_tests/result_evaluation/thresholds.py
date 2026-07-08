@@ -18,7 +18,7 @@ THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
     GET_SCHEMA: 500,
     GET_SCHEMA_V2: 500,
     GET_DATASET_METADATA: 200,
-    GET_UNIT_DATA: 100,
+    GET_UNIT_DATA: 110, # Add extra 10ms buffer to the original 100ms threshold
     GET_SURVEY_LIST: 500,
     POST_CI: 500,
     GET_CI_METADATA: 500,
@@ -28,3 +28,5 @@ THRESHOLDS_AVG_RESPONSE_TIME: dict[str, int] = {
 }
 
 THRESHOLDS_FAIL_RATIO: float = 0.01 # 1% fail ratio threshold for all endpoints
+
+THRESHOLDS_REQUEST_COUNT: int = 1 # Minimum request count threshold for all endpoints

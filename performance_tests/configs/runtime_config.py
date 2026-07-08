@@ -4,6 +4,9 @@ from performance_tests.preprocess.preprocess_sds_schema import PreProcessSDSSche
 
 
 class RuntimeConfig:
+    """
+    Class to cache the runtime configuration values that are needed across different test methods and processes.
+    """
     DATASET_ID: str = "UNASSIGNED"  # To be set during initiation
     SCHEMA_GUID: str = "UNASSIGNED"  # To be set during initiation
     HEADER: dict[str,str] | None = None  # To be set during initiation

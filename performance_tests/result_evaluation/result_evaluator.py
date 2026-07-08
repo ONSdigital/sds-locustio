@@ -5,6 +5,7 @@ from performance_tests.result_evaluation.anomalies import (
     ANOMALIES,
     AVG_RESPONSE_TIME_EXCEEDED_ANOMALY,
     FAIL_RATIO_EXCEEDED_ANOMALY,
+    REQUEST_COUNT_ANOMALY,
     Anomaly,
 )
 
@@ -21,12 +22,29 @@ class ResultEvaluator:
     def __init__(
             self,
             logger: Logger,
+            request_count_thresholds: int,
             fail_ratio_thresholds: float,
             avg_response_time_thresholds: dict[str, int],
     ):
         self.logger = logger
+        self.request_count_thresholds = request_count_thresholds
         self.fail_ratio_thresholds = fail_ratio_thresholds
         self.avg_response_time_thresholds = avg_response_time_thresholds
+
+    def evaluate_request_count(self, request_count: int) -> EvaluationResult:
+        """
+        Evaluate the request count against the threshold.
+
+        Parameters:
+        request_count (int): The request count to evaluate.
+
+        Returns:
+        bool: True if the request count is within the threshold, Anomaly otherwise.
+        """
+        if request_count < self.get_request_count_threshold():
+            return EvaluationResult(result=False, anomaly=ANOMALIES.get(REQUEST_COUNT_ANOMALY))
+
+        return EvaluationResult(result=True)
 
     def evaluate_fail_ratio(self, fail_ratio: float) -> EvaluationResult:
         """
@@ -82,6 +100,15 @@ class ResultEvaluator:
         float: The fail ratio threshold.
         """
         return self.fail_ratio_thresholds
+
+    def get_request_count_threshold(self) -> int:
+        """
+        Get the request count threshold.
+
+        Returns:
+        int: The request count threshold.
+        """
+        return self.request_count_thresholds
 
     def prompt_anomaly(self, evaluation_result: EvaluationResult) -> None:
         """
