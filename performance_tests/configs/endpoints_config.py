@@ -33,6 +33,7 @@ PUT_VALIDATOR_VERSION: str = "put_validator_version"
 # Runtime value placeholders
 RUNTIME_DATASET_ID_PLACEHOLDER = "dataset_id_placeholder"
 RUNTIME_SCHEMA_ID_PLACEHOLDER = "schema_guid_placeholder"
+RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER = "ci_schema_guids_placeholder"
 
 # URL placeholders
 PLACEHOLDERS: dict[str, str] = {
@@ -139,7 +140,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "name": "/collection-instruments/schema?guid=[guid]",
         "query_parameters": True,
         "params": {
-            "guid": config.TEST_CI_GUID,
+            "guid": RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER,
         },
         "payload": None,
     },
@@ -149,7 +150,7 @@ CIR_ENDPOINTS: dict[str, EndpointConfig] = {
         "name": "/collection-instruments/validator-version?guid=[guid]&validator_version=[validator_version]",
         "query_parameters": True,
         "params": {
-            "guid": config.TEST_CI_GUID,
+            "guid": RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER,
             "validator_version": {
                 "value": None,
                 "function": endpoints_func.generate_unique_validator_version,

@@ -1,3 +1,4 @@
+from random import randint
 from urllib.parse import quote, urlencode
 
 from locust.clients import ResponseContextManager
@@ -7,7 +8,7 @@ from performance_tests.configs.config import config
 from performance_tests.configs.endpoints_config import (
     RUNTIME_DATASET_ID_PLACEHOLDER,
     RUNTIME_SCHEMA_ID_PLACEHOLDER,
-    EndpointConfig,
+    EndpointConfig, RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER,
 )
 from performance_tests.configs.runtime_config import RuntimeConfig
 from performance_tests.locust_helper import LocustHelper
@@ -78,6 +79,9 @@ class EndpointsHelpers:
                 mapped_params[key] = runtime_config.DATASET_ID
             elif value == RUNTIME_SCHEMA_ID_PLACEHOLDER:
                 mapped_params[key] = runtime_config.SCHEMA_GUID
+            elif value == RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER:
+                # Randomly select a CI schema GUID from the list of available GUIDs in the runtime configuration
+                mapped_params[key] = runtime_config.CI_SCHEMA_GUIDS[randint(0, len(runtime_config.CI_SCHEMA_GUIDS) - 1)]
             else:
                 mapped_params[key] = value
 
