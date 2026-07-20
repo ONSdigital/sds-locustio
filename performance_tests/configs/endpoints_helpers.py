@@ -6,9 +6,10 @@ from locust.contrib.fasthttp import FastHttpSession, FastResponse
 
 from performance_tests.configs.config import config
 from performance_tests.configs.endpoints_config import (
+    RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER,
     RUNTIME_DATASET_ID_PLACEHOLDER,
     RUNTIME_SCHEMA_ID_PLACEHOLDER,
-    EndpointConfig, RUNTIME_CI_SCHEMA_GUIDS_PLACEHOLDER,
+    EndpointConfig,
 )
 from performance_tests.configs.runtime_config import RuntimeConfig
 from performance_tests.locust_helper import LocustHelper

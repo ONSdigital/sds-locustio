@@ -38,7 +38,7 @@ class PreProcessCIRSchema(PreProcessBase):
 
         schema_payload = self.locust_helper.load_json(config.TEST_CI_SCHEMA_FILE)
 
-        for i in range(config.TEST_CI_SCHEMA_PUBLISH_COUNT):
+        for _ in range(config.TEST_CI_SCHEMA_PUBLISH_COUNT):
             if self.locust_helper.create_cir_schema_record_before_test(
                     headers=self.header,
                     base_url=config.BASE_URL,
