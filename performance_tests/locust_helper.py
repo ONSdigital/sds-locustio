@@ -409,8 +409,8 @@ class LocustHelper:
 
         return response
 
-    # Wait and get schema guid from SDS
-    def wait_and_get_cir_schema_guid(
+    # Wait and get schema guids from CIR
+    def wait_and_get_cir_schema_guids(
             self,
             headers: dict,
             base_url: str,
@@ -420,9 +420,9 @@ class LocustHelper:
             survey_id: str,
             attempts: int = 10,
             backoff: int = 0.25,
-    ) -> str | None:
+    ) -> list[str] | None:
         """
-        Wait and get schema guid from SDS
+        Wait and get schema guids from CIR
 
         Args:
             headers (dict): the headers for the request
@@ -435,7 +435,7 @@ class LocustHelper:
             backoff (int): the backoff time
 
         Returns:
-            str: the schema guid
+            list[str]: a list of schema guids
         """
         while attempts != 0:
             response = self.get_cir_schema_metadata(
@@ -448,14 +448,17 @@ class LocustHelper:
             )
 
             if response.status_code == HTTPStatus.OK:
+                guid_list = []
                 for schema_metadata in response.json():
-                    return schema_metadata["guid"]
+                    guid_list.append(schema_metadata["guid"])
+
+                return guid_list
 
             attempts -= 1
             time.sleep(backoff)
             backoff += backoff
 
-        logger.error(f"Error getting CI schema guid using survey_id: {survey_id} form_type: {classifier_value} and language: {language}.")
+        logger.error(f"Error getting CI schema guids using survey_id: {survey_id} form_type: {classifier_value} and language: {language}.")
         return None
 
     def delete_cir_schema_record_after_test(

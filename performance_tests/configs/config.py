@@ -27,5 +27,6 @@ class Config:
     TEST_CI_CLASSIFIER_TYPE = "form_type"
     TEST_CI_CLASSIFIER_VALUE = "0001"
     TEST_CI_VALIDATOR_VERSION = "0.0.1"
+    TEST_CI_SCHEMA_PUBLISH_COUNT = 10 # Number of CI schema records to publish for testing. Can be adjusted based on the test requirements.
 
 config = Config()
